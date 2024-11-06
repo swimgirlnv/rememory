@@ -5,13 +5,24 @@ interface BuildingMarkerProps {
   position: [number, number];
   name: string;
   memory: string;
+  color: string;
+  media?: {
+    images?: string[];
+    videoUrl?: string;
+    audioUrl?: string;
+  };
+  onClick: () => void;
+  onReadMore: () => void;
 }
 
-const BuildingMarker: React.FC<BuildingMarkerProps> = ({ position, name, memory }) => (
-  <Marker position={position}>
+const BuildingMarker: React.FC<BuildingMarkerProps> = ({ position, name, memory, color, media, onClick, onReadMore }) => (
+  <Marker position={position} eventHandlers={{ click: onClick }}>
     <Popup>
       <h3>{name}</h3>
-      <p>{memory}</p>
+      <p>{memory.length > 100 ? `${memory.slice(0, 100)}...` : memory}</p>
+      {memory.length > 100 && (
+        <button onClick={onReadMore}>Read More</button>
+      )}
     </Popup>
   </Marker>
 );
