@@ -8,21 +8,21 @@ interface Route {
   
   export const routes: Route[] = [
     {
-      name: 'Sayles Hall to John Hay Library',
+      name: 'Hope to Pool',
       description: 'A scenic route from Sayles Hall to John Hay Library, passing through the Main Green.',
       path: [
-        [41.8268, -71.4036], // Sayles Hall
-        [41.8254, -71.4041], // John Hay Library
+        [41.82680252687402, -71.40381810624025], // Hope
+        [41.83033143131877, -71.3971432825428], // Pool
       ],
       year: 'Freshman',
-      media: {audioUrl: 'https://www.example.com/audio1.mp3'},
+      media: {audioUrl: 'https://music.youtube.com/watch?v=uaLV003llhY&si=DlXnSX7ogjXB0cBS'},
     },
     {
-      name: 'Library to Science Building',
+      name: 'Hegeman to Pool',
       description: 'A path from the library to the science building, often taken for study sessions.',
       path: [
-        [41.8254, -71.4041], // Library
-        [41.8270, -71.4022], // Science Building
+        [41.825681871605966, -71.4005603063427], // Hegeman
+        [41.83033143131877, -71.3971432825428], // Pool
       ],
       year: 'Sophomore',
         media: {videoUrl: 'https://www.example.com/video1.mp4'},
