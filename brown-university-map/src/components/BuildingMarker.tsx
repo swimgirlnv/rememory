@@ -15,7 +15,7 @@ interface BuildingMarkerProps {
   onReadMore: () => void;
 }
 
-const BuildingMarker: React.FC<BuildingMarkerProps> = ({ position, name, memory, color, media, onClick, onReadMore }) => (
+const BuildingMarker: React.FC<BuildingMarkerProps> = ({ position, name, memory, onClick, onReadMore }) => (
   <Marker position={position} eventHandlers={{ click: onClick }}>
     <Popup>
       <h3>{name}</h3>
