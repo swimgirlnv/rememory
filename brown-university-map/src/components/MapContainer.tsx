@@ -48,6 +48,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
   const [selectedMarker, setSelectedMarker] = useState<MarkerData | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [newMarkerPosition, setNewMarkerPosition] = useState<[number, number] | null>(null);
+  console.log(selectedPath);
 
   // Fetch markers from Firestore
   useEffect(() => {

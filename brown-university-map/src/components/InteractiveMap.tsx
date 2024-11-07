@@ -2,10 +2,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // InteractiveMap.tsx
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents, Popup, Polyline } from 'react-leaflet';
 import L, { LatLngExpression } from 'leaflet';
-import { addDoc, collection, updateDoc, deleteDoc, doc } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig.ts';
 import { MarkerData, PathData } from '../data/types';
 import TipTapEditor from './TipTapEditor.ts';
