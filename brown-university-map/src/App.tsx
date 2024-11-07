@@ -58,6 +58,15 @@ function App() {
     <div className="App">
       <div className='body'>
         <div className="controls">
+
+          {/* Editing Mode Toggle Button */}
+          <button onClick={toggleEditingMode} className="editing-mode-toggle">
+            {isEditingMode ? "Disable Editing Mode" : "Enable Editing Mode"}
+          </button>
+        </div>
+
+        {!isEditingMode && (
+          <>
           <div className="filters">
             {['Freshman', 'Sophomore', 'Junior', 'Senior'].map((year) => (
               <label key={year}>
@@ -80,14 +89,7 @@ function App() {
               ))}
             </select>
           </div>
-
-          {/* Editing Mode Toggle Button */}
-          <button onClick={toggleEditingMode} className="editing-mode-toggle">
-            {isEditingMode ? "Disable Editing Mode" : "Enable Editing Mode"}
-          </button>
-        </div>
-
-        {!isEditingMode && (
+          
           <div className="scavenger-hunt">
             {huntCompleted ? (
               <p>Congratulations! You've completed the scavenger hunt!</p>
@@ -95,6 +97,7 @@ function App() {
               <p><strong>Clue:</strong> {currentClue}</p>
             )}
           </div>
+          </>
         )}
 
         {isEditingMode && (

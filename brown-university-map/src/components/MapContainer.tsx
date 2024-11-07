@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Polyline, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Polyline, Popup, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
@@ -12,6 +14,7 @@ interface MapComponentProps {
   isEditingMode: boolean;
   showPathModal: boolean;
   onMakePath: () => void;
+  onBuildingClick: (buildingName: string) => void;
 }
 
 interface MarkerData {
@@ -37,14 +40,14 @@ const MapComponent: React.FC<MapComponentProps> = ({
   mapCenter,
   mapZoom,
   isEditingMode,
-  showPathModal,
-  onMakePath,
 }) => {
   const [markers, setMarkers] = useState<MarkerData[]>([]);
   const [paths, setPaths] = useState<PathData[]>([]);
-  const [selectedMarker, setSelectedMarker] = useState<MarkerData | null>(null);
   const [selectedPath, setSelectedPath] = useState<PathData | null>(null);
+  const [selectedMarkers, setSelectedMarkers] = useState<string[]>([]);
+  const [selectedMarker, setSelectedMarker] = useState<MarkerData | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [newMarkerPosition, setNewMarkerPosition] = useState<[number, number] | null>(null);
 
   // Fetch markers from Firestore
   useEffect(() => {
@@ -85,6 +88,21 @@ const MapComponent: React.FC<MapComponentProps> = ({
     fetchPaths();
   }, []);
 
+  const handleMarkerSelect = (marker: MarkerData) => {
+    if (isEditingMode) {
+      setSelectedMarkers((prevSelected) =>
+        prevSelected.includes(marker.id!)
+          ? prevSelected.filter((id) => id !== marker.id)
+          : [...prevSelected, marker.id!]
+      );
+    }
+  };
+
+  const handleEditMarker = (marker: MarkerData) => {
+    setSelectedMarker(marker);
+    setShowEditModal(true);
+  };
+
   // Delete a marker
   const handleDeleteMarker = async (markerId: string) => {
     await deleteDoc(doc(db, 'markers', markerId));
@@ -100,12 +118,21 @@ const MapComponent: React.FC<MapComponentProps> = ({
   // Save edited marker details to Firestore
   const handleSaveMarkerEdit = async () => {
     if (selectedMarker && selectedMarker.id) {
-      await updateDoc(doc(db, 'markers', selectedMarker.id), {
+      const markerData: Partial<MarkerData> = {
         name: selectedMarker.name,
         memory: selectedMarker.memory,
         year: selectedMarker.year,
-        media: selectedMarker.media,
-      });
+        media: {
+          ...(selectedMarker.media?.audioUrl ? { audioUrl: selectedMarker.media.audioUrl } : {}),
+          ...(selectedMarker.media?.videoUrl ? { videoUrl: selectedMarker.media.videoUrl } : {}),
+          ...(selectedMarker.media?.imageUrl ? { imageUrl: selectedMarker.media.imageUrl } : {}),
+        },
+      };
+
+      // Update marker in Firestore
+      await updateDoc(doc(db, 'markers', selectedMarker.id), markerData);
+      
+      // Update local state
       setMarkers((prevMarkers) =>
         prevMarkers.map((m) => (m.id === selectedMarker.id ? selectedMarker : m))
       );
@@ -113,26 +140,42 @@ const MapComponent: React.FC<MapComponentProps> = ({
     }
   };
 
-  // Save edited path details to Firestore
-  const handleSavePathEdit = async () => {
-    if (selectedPath && selectedPath.id) {
-      await updateDoc(doc(db, 'paths', selectedPath.id), {
-        name: selectedPath.name,
-        memory: selectedPath.memory,
-        year: selectedPath.year,
-        media: selectedPath.media,
+  // Function to handle saving a new marker
+  const handleSaveNewMarker = async () => {
+    if (newMarkerPosition) {
+      const newMarker = {
+        position: newMarkerPosition,
+        name: '',
+        memory: '',
+        year: 'Freshman',
+        media: {},
+      };
+
+      const docRef = await addDoc(collection(db, 'markers'), {
+        lat: newMarkerPosition[0],
+        lng: newMarkerPosition[1],
+        name: newMarker.name,
+        memory: newMarker.memory,
+        year: newMarker.year,
       });
-      setPaths((prevPaths) => prevPaths.map((p) => (p.id === selectedPath.id ? selectedPath : p)));
+
+      setMarkers([...markers, { ...newMarker, id: docRef.id, year: newMarker.year as 'Freshman' | 'Sophomore' | 'Junior' | 'Senior' }]);
+      setNewMarkerPosition(null);
       setShowEditModal(false);
     }
   };
 
-  const [showModal, setShowModal] = useState(false);
-  const [modalContent, setModalContent] = useState<{ title: string; content: string; media?: any } | null>(null);
-
-  const handleReadMore = (title: string, content: string, media?: any) => {
-    setModalContent({ title, content, media });
-    setShowModal(true);
+  // Event listener to handle map clicks for creating new markers
+  const MapClickHandler = () => {
+    useMapEvents({
+      click: (e) => {
+        if (isEditingMode) {
+          setNewMarkerPosition([e.latlng.lat, e.latlng.lng]);
+          setShowEditModal(true);
+        }
+      },
+    });
+    return null;
   };
 
   return (
@@ -142,6 +185,9 @@ const MapComponent: React.FC<MapComponentProps> = ({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution="&copy; OpenStreetMap contributors"
         />
+
+        {/* Handle map clicks for creating new markers */}
+        <MapClickHandler />
 
         {/* Display markers */}
         {markers
@@ -155,26 +201,12 @@ const MapComponent: React.FC<MapComponentProps> = ({
                 year={marker.year}
                 color="blue"
                 isEditingMode={isEditingMode}
-                onClick={() => setSelectedMarker(marker)}
-                onReadMore={() => handleReadMore(marker.name, marker.memory, marker.media)}
-                >
-              <Popup>
-                <h3>{marker.name}</h3>
-                <p>{marker.memory}</p>
-                {isEditingMode ? (
-                  <>
-                    <button onClick={() => { setSelectedMarker(marker); setShowEditModal(true); }}>Edit</button>
-                    <button onClick={() => handleDeleteMarker(marker.id || '')}>Delete</button>
-                  </>
-                ) : (
-                  <>
-                    <p>Year: {marker.year}</p>
-                    {marker.media?.audioUrl && <audio src={marker.media.audioUrl} controls />}
-                    {marker.media?.videoUrl && <video src={marker.media.videoUrl} controls />}
-                  </>
-                )}
-              </Popup>
-            </BuildingMarker>
+                isSelected={selectedMarkers.includes(marker.id || '')}
+                onClick={() => handleMarkerSelect(marker)}
+                onReadMore={() => {}}
+                onDelete={() => handleDeleteMarker(marker.id || '')}
+                onEdit={() => handleEditMarker(marker)}
+            />
           ))}
 
         {/* Display paths */}
@@ -193,53 +225,49 @@ const MapComponent: React.FC<MapComponentProps> = ({
                   <button onClick={() => handleDeletePath(path.id)}>Delete</button>
                 </>
               ) : (
-                <>
-                  <p>Year: {path.year}</p>
-                  {path.media?.audioUrl && <audio src={path.media.audioUrl} controls />}
-                  {path.media?.videoUrl && <video src={path.media.videoUrl} controls />}
-                </>
+                <p>Year: {path.year}</p>
               )}
             </Popup>
           </Polyline>
         ))}
       </MapContainer>
 
-      {/* Modal for editing marker/path */}
+      {/* Modal for editing or adding markers */}
       {showEditModal && (
         <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2>Edit {selectedMarker ? 'Marker' : 'Path'}</h2>
+            <h2>{newMarkerPosition ? 'Add New Marker' : 'Edit Marker'}</h2>
             <label>
               Name:
               <input
                 type="text"
-                value={selectedMarker ? selectedMarker.name : selectedPath?.name}
+                value={selectedMarker ? selectedMarker.name : ''}
                 onChange={(e) =>
                   selectedMarker
                     ? setSelectedMarker({ ...selectedMarker, name: e.target.value })
-                    : setSelectedPath({ ...selectedPath!, name: e.target.value })
+                    : setSelectedMarker({ name: e.target.value, memory: '', year: 'Freshman', position: newMarkerPosition! })
                 }
               />
             </label>
             <label>
               Memory:
               <textarea
-                value={selectedMarker ? selectedMarker.memory : selectedPath?.memory}
+                value={selectedMarker ? selectedMarker.memory : ''}
                 onChange={(e) =>
                   selectedMarker
                     ? setSelectedMarker({ ...selectedMarker, memory: e.target.value })
-                    : setSelectedPath({ ...selectedPath!, memory: e.target.value })
+                    : setSelectedMarker({ name: '', memory: e.target.value, year: 'Freshman', position: newMarkerPosition! })
                 }
               />
             </label>
             <label>
               Year:
               <select
-                value={selectedMarker ? selectedMarker.year : selectedPath?.year}
+                value={selectedMarker ? selectedMarker.year : 'Freshman'}
                 onChange={(e) =>
                   selectedMarker
                     ? setSelectedMarker({ ...selectedMarker, year: e.target.value as 'Freshman' | 'Sophomore' | 'Junior' | 'Senior' })
-                    : setSelectedPath({ ...selectedPath!, year: e.target.value as 'Freshman' | 'Sophomore' | 'Junior' | 'Senior' })
+                    : setSelectedMarker({ name: '', memory: '', year: e.target.value as 'Freshman' | 'Sophomore' | 'Junior' | 'Senior', position: newMarkerPosition! })
                 }
               >
                 <option value="Freshman">Freshman</option>
@@ -248,7 +276,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
                 <option value="Senior">Senior</option>
               </select>
             </label>
-            <button onClick={selectedMarker ? handleSaveMarkerEdit : handleSavePathEdit}>Save</button>
+            <button onClick={newMarkerPosition ? handleSaveNewMarker : handleSaveMarkerEdit}>Save</button>
             <button onClick={() => setShowEditModal(false)}>Cancel</button>
           </div>
         </div>
