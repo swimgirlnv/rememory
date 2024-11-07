@@ -10,7 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tiptap/react": "^2.9.1",
+    "@tiptap/starter-kit": "^2.9.1",
     "@types/leaflet-routing-machine": "^3.2.8",
+    "firebase": "^11.0.1",
     "leaflet": "^1.9.4",
     "leaflet-routing-machine": "^3.2.12",
     "react": "^18.3.1",

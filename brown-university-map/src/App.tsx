@@ -8,22 +8,23 @@ function App() {
   const [selectedYears, setSelectedYears] = useState<string[]>(['Freshman', 'Sophomore', 'Junior', 'Senior']);
   const [mapCenter, setMapCenter] = useState<[number, number]>(locations[0].coordinates);
   const [mapZoom, setMapZoom] = useState<number>(locations[0].zoom);
-
   const [currentHuntStep, setCurrentHuntStep] = useState<number>(0);
   const [huntCompleted, setHuntCompleted] = useState<boolean>(false);
+  const [isEditingMode, setIsEditingMode] = useState<boolean>(false); // Editing mode state
+  const [showPathModal, setShowPathModal] = useState(false); // Path creation modal state
 
   const currentClue = scavengerHuntSteps[currentHuntStep]?.clue;
 
   const handleBuildingClick = (buildingName: string) => {
-    if (scavengerHuntSteps[currentHuntStep].targetBuilding === buildingName) {
-      alert(`Congrats! ${scavengerHuntSteps[currentHuntStep].reward}`);
+    if (!isEditingMode && scavengerHuntSteps[currentHuntStep].targetBuilding === buildingName) {
+      console.log(`Congrats! ${scavengerHuntSteps[currentHuntStep].reward}`);
       if (currentHuntStep + 1 < scavengerHuntSteps.length) {
         setCurrentHuntStep(currentHuntStep + 1);
       } else {
         setHuntCompleted(true);
       }
-    } else {
-      alert("That's not the correct location. Keep looking!");
+    } else if (!isEditingMode) {
+      console.log("That's not the correct location. Keep looking!");
     }
   };
 
@@ -41,12 +42,20 @@ function App() {
     }
   };
 
+  const toggleEditingMode = () => {
+    setIsEditingMode((prev) => !prev);
+    if (isEditingMode) {
+      setCurrentHuntStep(0);
+      setHuntCompleted(false);
+    }
+  };
+
+  const handleMakePathClick = () => {
+    setShowPathModal(true); // Show path creation modal
+  };
+
   return (
     <div className="App">
-      {/* <header>
-        <h3>Remembering and Re-Memory</h3>
-      </header> */}
-
       <div className='body'>
         <div className="controls">
           <div className="filters">
@@ -71,25 +80,42 @@ function App() {
               ))}
             </select>
           </div>
+
+          {/* Editing Mode Toggle Button */}
+          <button onClick={toggleEditingMode} className="editing-mode-toggle">
+            {isEditingMode ? "Disable Editing Mode" : "Enable Editing Mode"}
+          </button>
         </div>
 
-        <div className="scavenger-hunt">
-        {huntCompleted ? (
-          <p>Congratulations! You've completed the scavenger hunt!</p>
-        ) : (
-          <p><strong>Clue:</strong> {currentClue}</p>
+        {!isEditingMode && (
+          <div className="scavenger-hunt">
+            {huntCompleted ? (
+              <p>Congratulations! You've completed the scavenger hunt!</p>
+            ) : (
+              <p><strong>Clue:</strong> {currentClue}</p>
+            )}
+          </div>
         )}
+
+        {isEditingMode && (
+          <div className="editing-menu">
+            <button onClick={handleMakePathClick}>Make Path</button>
+          </div>
+        )}
+
+        <main>
+          <MapComponent 
+            selectedYears={selectedYears} 
+            mapCenter={mapCenter} 
+            mapZoom={mapZoom} 
+            onBuildingClick={handleBuildingClick} 
+            isEditingMode={isEditingMode} 
+            showPathModal={showPathModal} // Control path modal visibility
+            onMakePath={() => setShowPathModal(false)} // Function to close modal after saving path
+          />
+        </main>
       </div>
 
-      <main>
-        <MapComponent 
-          selectedYears={selectedYears} 
-          mapCenter={mapCenter} 
-          mapZoom={mapZoom} 
-          onBuildingClick={handleBuildingClick} 
-        />
-      </main>
-      </div>
       <footer>
         <p>Made with ♡ in Providence</p>
       </footer>
