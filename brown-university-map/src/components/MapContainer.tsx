@@ -6,6 +6,7 @@ import 'leaflet/dist/leaflet.css';
 import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import BuildingMarker from './BuildingMarker';
+import EditModal from './EditModal';
 
 interface MapComponentProps {
   selectedYears: string[];
@@ -235,52 +236,29 @@ const MapComponent: React.FC<MapComponentProps> = ({
 
       {/* Modal for editing or adding markers */}
       {showEditModal && (
-        <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2>{newMarkerPosition ? 'Add New Marker' : 'Edit Marker'}</h2>
-            <label>
-              Name:
-              <input
-                type="text"
-                value={selectedMarker ? selectedMarker.name : ''}
-                onChange={(e) =>
-                  selectedMarker
-                    ? setSelectedMarker({ ...selectedMarker, name: e.target.value })
-                    : setSelectedMarker({ name: e.target.value, memory: '', year: 'Freshman', position: newMarkerPosition! })
-                }
-              />
-            </label>
-            <label>
-              Memory:
-              <textarea
-                value={selectedMarker ? selectedMarker.memory : ''}
-                onChange={(e) =>
-                  selectedMarker
-                    ? setSelectedMarker({ ...selectedMarker, memory: e.target.value })
-                    : setSelectedMarker({ name: '', memory: e.target.value, year: 'Freshman', position: newMarkerPosition! })
-                }
-              />
-            </label>
-            <label>
-              Year:
-              <select
-                value={selectedMarker ? selectedMarker.year : 'Freshman'}
-                onChange={(e) =>
-                  selectedMarker
-                    ? setSelectedMarker({ ...selectedMarker, year: e.target.value as 'Freshman' | 'Sophomore' | 'Junior' | 'Senior' })
-                    : setSelectedMarker({ name: '', memory: '', year: e.target.value as 'Freshman' | 'Sophomore' | 'Junior' | 'Senior', position: newMarkerPosition! })
-                }
-              >
-                <option value="Freshman">Freshman</option>
-                <option value="Sophomore">Sophomore</option>
-                <option value="Junior">Junior</option>
-                <option value="Senior">Senior</option>
-              </select>
-            </label>
-            <button onClick={newMarkerPosition ? handleSaveNewMarker : handleSaveMarkerEdit}>Save</button>
-            <button onClick={() => setShowEditModal(false)}>Cancel</button>
-          </div>
-        </div>
+        <EditModal
+            title={newMarkerPosition ? 'Add New Marker' : 'Edit Marker'}
+            name={selectedMarker ? selectedMarker.name : ''}
+            memory={selectedMarker ? selectedMarker.memory : ''}
+            year={selectedMarker ? selectedMarker.year : 'Freshman'}
+            onSave={newMarkerPosition ? handleSaveNewMarker : handleSaveMarkerEdit}
+            onCancel={() => setShowEditModal(false)}
+            onNameChange={(newName) =>
+            selectedMarker
+                ? setSelectedMarker({ ...selectedMarker, name: newName })
+                : setSelectedMarker({ name: newName, memory: '', year: 'Freshman', position: newMarkerPosition! })
+            }
+            onMemoryChange={(newMemory) =>
+            selectedMarker
+                ? setSelectedMarker({ ...selectedMarker, memory: newMemory })
+                : setSelectedMarker({ name: '', memory: newMemory, year: 'Freshman', position: newMarkerPosition! })
+            }
+            onYearChange={(newYear) =>
+            selectedMarker
+                ? setSelectedMarker({ ...selectedMarker, year: newYear })
+                : setSelectedMarker({ name: '', memory: '', year: newYear, position: newMarkerPosition! })
+            }
+      />
       )}
     </>
   );

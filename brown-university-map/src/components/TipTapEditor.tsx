@@ -17,7 +17,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({ content, setContent }) => {
     },
   });
 
-  return <EditorContent editor={editor} />;
+  return <div style={{display: 'flex', flexDirection: 'column'}}><EditorContent editor={editor} /></div>;
 };
 
 export default TipTapEditor;
