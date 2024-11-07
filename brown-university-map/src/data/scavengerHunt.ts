@@ -5,7 +5,7 @@ interface ScavengerHuntStep {
   }
   
   export const scavengerHuntSteps: ScavengerHuntStep[] = [
-    { clue: 'Find the hall where Brown’s orchestra performs its concerts.', targetBuilding: 'Sayles Hall', reward: 'You unlocked a memory about your first orchestra concert!' },
-    { clue: 'Locate the library known for its massive quiet study rooms.', targetBuilding: 'John Hay Library', reward: 'You unlocked a memory about studying late into the night!' },
+    { clue: 'Towering monolith with a sweet smile.', targetBuilding: 'Sci Li', reward: 'You remember the first time you saw the Naked Donut run.' },
+    { clue: 'Between this and a hard place... he kissed you there. You miss those late nights.', targetBuilding: 'Rock', reward: 'You cannot remember anyone else making you feel this way.' },
     // Add more steps as desired
   ];

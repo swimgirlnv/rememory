@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState } from 'react';
-import { MapContainer, TileLayer} from 'react-leaflet';
+import React, { useEffect, useState } from 'react';
+import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { LatLngExpression } from 'leaflet';
-import 'leaflet-routing-machine';
 import { buildings } from '../data/buildings';
 import { routes } from '../data/routes';
 import BuildingMarker from './BuildingMarker';
@@ -21,6 +20,16 @@ const MapComponent: React.FC<MapComponentProps> = ({ selectedYears, mapCenter, m
   const [showModal, setShowModal] = useState(false);
   const [modalContent, setModalContent] = useState<{ title: string; content: string; media?: any } | null>(null);
 
+  const MapUpdater = () => {
+    const map = useMap();
+
+    useEffect(() => {
+      map.setView(mapCenter, mapZoom);
+    }, [map, mapCenter, mapZoom]);
+
+    return null;
+  };
+
   const handleReadMore = (title: string, content: string, media?: any) => {
     setModalContent({ title, content, media });
     setShowModal(true);
@@ -37,6 +46,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ selectedYears, mapCenter, m
   return (
     <>
       <MapContainer center={mapCenter} zoom={mapZoom} style={{ height: '100vh', width: '100%' }}>
+        <MapUpdater />
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution="&copy; OpenStreetMap contributors"
@@ -50,7 +60,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ selectedYears, mapCenter, m
               {...building}
               onClick={() => onBuildingClick(building.name)}
               onReadMore={() => handleReadMore(building.name, building.memory, building.media)}
-              color={routeColors[building.year]}
+              color='blue'
             />
           ))}
 
