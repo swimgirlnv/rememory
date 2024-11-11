@@ -1,72 +1,41 @@
 import React from 'react';
 import { Polyline, Popup } from 'react-leaflet';
-import { LatLngExpression } from 'leaflet';
+import { LatLngTuple } from 'leaflet';
+import { PathData, MarkerData } from '../data/types';
 
 interface MapRouteProps {
-  route: { path: [number, number][]; description: string };
-  color: string;
-  media?: { audioUrl?: string; videoUrl?: string };
+    isEditMode: boolean;
+    path: PathData;
+    markers: MarkerData[];  // Array of all markers with their coordinates
+    filterYear: Date | null;
+    filterClassYear: string | null;
 }
 
-const MapRoute: React.FC<MapRouteProps> = ({ route, color, media }) => {
-  const path: LatLngExpression[] = route.path.map((coord) => [coord[0], coord[1]]);
+const MapRoute: React.FC<MapRouteProps> = ({ isEditMode, path, markers, filterYear, filterClassYear }) => {
+    if (!path || !path.markers) return null;
 
-  return (
-    <Polyline positions={path} color={color} weight={5}>
-      <Popup>
-        <div>
-          <p>{route.description}</p>
-          {/* Handle audio and video media */}
-          {media?.audioUrl && media.audioUrl.includes("youtube.com") ? (
-            <div>
-              <p>YouTube Audio:</p>
-              <iframe
-                width="250"
-                height="150"
-                src={media.audioUrl.replace("music.youtube.com", "www.youtube.com").replace("watch?v=", "embed/")}
-                title="YouTube Audio"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              ></iframe>
-            </div>
-          ) : (
-            media?.audioUrl && (
-              <div>
-                <p>Audio:</p>
-                <audio controls>
-                  <source src={media.audioUrl} type="audio/mpeg" />
-                  Your browser does not support the audio element.
-                </audio>
-              </div>
-            )
-          )}
-          {media?.videoUrl && media.videoUrl.includes("youtube.com") ? (
-            <div>
-              <p>YouTube Video:</p>
-              <iframe
-                width="250"
-                height="150"
-                src={media.videoUrl.replace("watch?v=", "embed/")}
-                title="YouTube Video"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              ></iframe>
-            </div>
-          ) : (
-            media?.videoUrl && (
-              <div>
-                <p>Video:</p>
-                <video width="250" controls>
-                  <source src={media.videoUrl} type="video/mp4" />
-                  Your browser does not support the video element.
-                </video>
-              </div>
-            )
-          )}
-        </div>
-      </Popup>
-    </Polyline>
-  );
+    // Filter route based on Year and ClassYear
+    const isVisible =
+        (!filterYear || path.year.getFullYear() === filterYear.getFullYear()) &&
+        (!filterClassYear || path.classYear === filterClassYear);
+
+    // Convert marker IDs in `path.markers` to LatLngTuple coordinates
+    const routeCoordinates: LatLngTuple[] = path.markers
+        .map(markerId => {
+            const marker = markers.find(m => m.id === markerId);  // Find the marker by ID
+            return marker ? [marker.lat, marker.lng] as LatLngTuple : null;  // Convert to LatLngTuple if found
+        })
+        .filter(coord => coord !== null) as LatLngTuple[];  // Filter out any null values
+
+    return isVisible ? (
+        <Polyline positions={routeCoordinates} color="blue">
+            <Popup>
+                <strong>Path Information</strong>
+                <p>{path.memory}</p>
+                {isEditMode && <p>Click to edit</p>}
+            </Popup>
+        </Polyline>
+    ) : null;
 };
 
 export default MapRoute;

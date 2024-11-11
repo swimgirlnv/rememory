@@ -1,8 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './styles/App.css';
-import MapComponent from './components/MapContainer';
 import { locations } from './data/locations';
 import { scavengerHuntSteps } from './data/scavengerHunt';
+import PathCreationModal from './components/PathCreationModal';
+import { db } from '../firebaseConfig';
+import { addDoc, collection, getDocs } from 'firebase/firestore';
+import InteractiveMap from './components/InteractiveMap';
 
 function App() {
   const [selectedYears, setSelectedYears] = useState<string[]>(['Freshman', 'Sophomore', 'Junior', 'Senior']);
@@ -10,23 +13,49 @@ function App() {
   const [mapZoom, setMapZoom] = useState<number>(locations[0].zoom);
   const [currentHuntStep, setCurrentHuntStep] = useState<number>(0);
   const [huntCompleted, setHuntCompleted] = useState<boolean>(false);
-  const [isEditingMode, setIsEditingMode] = useState<boolean>(false); // Editing mode state
-  const [showPathModal, setShowPathModal] = useState(false); // Path creation modal state
+  const [isEditingMode, setIsEditingMode] = useState<boolean>(false);
+  const [showPathModal, setShowPathModal] = useState(false);
+  const [selectedMarkers, setSelectedMarkers] = useState<string[]>([]); // Track selected marker IDs
 
   const currentClue = scavengerHuntSteps[currentHuntStep]?.clue;
 
-  const handleBuildingClick = (buildingName: string) => {
-    if (!isEditingMode && scavengerHuntSteps[currentHuntStep].targetBuilding === buildingName) {
-      console.log(`Congrats! ${scavengerHuntSteps[currentHuntStep].reward}`);
-      if (currentHuntStep + 1 < scavengerHuntSteps.length) {
-        setCurrentHuntStep(currentHuntStep + 1);
-      } else {
-        setHuntCompleted(true);
+  const [markers, setMarkers] = useState<any[]>([]);
+
+    useEffect(() => {
+        // Fetch markers from Firestore on component mount
+        const fetchMarkers = async () => {
+            try {
+                const querySnapshot = await getDocs(collection(db, 'markers'));
+                const markersData = querySnapshot.docs.map((doc) => ({
+                    id: doc.id,
+                    ...doc.data(),
+                }));
+                setMarkers(markersData);
+            } catch (error) {
+                console.error('Error fetching markers: ', error);
+            }
+        };
+
+        fetchMarkers();
+    }, []);
+
+  const [paths, setPaths] = useState<any[]>([]);
+  useEffect(() => {
+    const fetchPaths = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'paths'));
+        const pathsData = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setPaths(pathsData);
+      } catch (error) {
+        console.error('Error fetching paths: ', error);
       }
-    } else if (!isEditingMode) {
-      console.log("That's not the correct location. Keep looking!");
-    }
-  };
+    };
+
+    fetchPaths();
+  }, []);
 
   const handleCheckboxChange = (year: string) => {
     setSelectedYears((prevYears) =>
@@ -47,21 +76,42 @@ function App() {
     if (isEditingMode) {
       setCurrentHuntStep(0);
       setHuntCompleted(false);
+      setSelectedMarkers([]);
     }
   };
 
   const handleMakePathClick = () => {
-    setShowPathModal(true); // Show path creation modal
+    setShowPathModal(true);
+  };
+
+  const handleMarkerSelect = (markerId: string) => {
+    setSelectedMarkers((prev) =>
+      prev.includes(markerId) ? prev.filter((id) => id !== markerId) : [...prev, markerId]
+    );
+  };
+
+  const handleSavePath = async (name: string, memory: string, year: string) => {
+    try {
+      const pathCoordinates = selectedMarkers.map(id => {
+        const marker = markers.find(m => m.id === id); // Assumes markers state is available with lat/lng info
+        return marker ? { lat: marker.position[0], lng: marker.position[1] } : null;
+      }).filter(coord => coord !== null);
+
+      const pathData = { name, memory, year, coordinates: pathCoordinates };
+      const docRef = await addDoc(collection(db, 'paths'), pathData);
+      console.log(`Path saved with ID: ${docRef.id}`);
+    } catch (error) {
+      console.error("Error saving path:", error);
+    }
+    setShowPathModal(false);
   };
 
   return (
     <div className="App">
       <div className='body'>
         <div className="controls">
-
-          {/* Editing Mode Toggle Button */}
           <button onClick={toggleEditingMode} className="editing-mode-toggle">
-            {isEditingMode ? "Disable Editing Mode" : "Enable Editing Mode"}
+            {isEditingMode ? "Switch to View Mode" : "Switch to Edit Mode"}
           </button>
         </div>
 
@@ -107,17 +157,25 @@ function App() {
         )}
 
         <main>
-          <MapComponent 
+          {/* <MapComponent 
             selectedYears={selectedYears} 
             mapCenter={mapCenter} 
             mapZoom={mapZoom} 
             onBuildingClick={handleBuildingClick} 
             isEditingMode={isEditingMode} 
-            showPathModal={showPathModal} // Control path modal visibility
-            onMakePath={() => setShowPathModal(false)} // Function to close modal after saving path
-          />
+            selectedMarkers={selectedMarkers} 
+            onMarkerSelect={handleMarkerSelect}
+          /> */}
+          <InteractiveMap mapCenter={mapCenter} mapZoom={mapZoom} isEditMode={isEditingMode} markers={markers} setMarkers={setMarkers} paths={paths} setPaths={setPaths} />
         </main>
       </div>
+
+      {showPathModal && (
+        <PathCreationModal 
+          onSave={handleSavePath} 
+          onClose={() => setShowPathModal(false)} 
+        />
+      )}
 
       <footer>
         <p>Made with ♡ in Providence</p>
