@@ -8,7 +8,8 @@ interface EditModalProps {
   title: string;
   name: string;
   memory: string;
-  year: 'Freshman' | 'Sophomore' | 'Junior' | 'Senior';
+  classYear: '' | 'Freshman' | 'Sophomore' | 'Junior' | 'Senior';
+  year: Date;
   onSave: (updatedMarker: MarkerData) => Promise<void>;
   onCancel: () => void;
   onNameChange: (newName: string) => void;
@@ -21,6 +22,7 @@ const EditModal: React.FC<EditModalProps> = ({
   name,
   memory,
   year,
+  classYear,
   onSave,
   onCancel,
   onNameChange,
@@ -72,7 +74,7 @@ const EditModal: React.FC<EditModalProps> = ({
           <label style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
             Year:
             <select
-              value={year}
+              value={classYear}
               onChange={(e) => onYearChange(e.target.value as 'Freshman' | 'Sophomore' | 'Junior' | 'Senior')}
               style={{ marginLeft: '10px' }}
             >

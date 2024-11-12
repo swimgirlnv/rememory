@@ -1,17 +1,19 @@
 
 interface Building {
+    id: string;
     name: string;
     position: [number, number];
     memory: string;
-    year: 'Freshman' | 'Sophomore' | 'Junior' | 'Senior';
+    classYear: 'Freshman' | 'Sophomore' | 'Junior' | 'Senior';
+    year: Date;
     media?: {images?: string[]; videoUrl?: string; audioUrl?: string;};
   }
   
   export const buildings: Building[] = [
-    { name: 'Sayles Hall', position: [41.826158527287994, -71.40281566471815], memory: 'Great Adventure', year: 'Junior' },
-    { name: 'Sci Li', position: [41.82705892280546, -71.40018400863207], memory: 'Naked Donut Run', year: 'Sophomore' },
-    { name: 'CIT', position: [41.827090228925854, -71.39958416259826], memory: 'CIT challenge', year: 'Senior' },
-    { name: 'Main Green', position: [41.8266, -71.4020], memory: 'Senior year graduation ceremony.', year: 'Senior' },
+    { name: 'Sayles Hall', position: [41.826158527287994, -71.40281566471815], memory: 'Great Adventure', classYear: 'Junior', year: new Date('2022-10-01'), id: '1' },
+    { name: 'Sci Li', position: [41.82705892280546, -71.40018400863207], memory: 'Naked Donut Run', classYear: 'Sophomore', year: new Date('2021-10-01'), id: '2' },
+    { name: 'CIT', position: [41.827090228925854, -71.39958416259826], memory: 'CIT challenge', classYear: 'Senior', year: new Date('2023-10-01'), id: '3' },
+    { name: 'Main Green', position: [41.8266, -71.4020], memory: 'Senior year graduation ceremony.', classYear: 'Senior', year: new Date('2023-10-01'), id: '4' },
     { name: 'Hillel', position: [41.82802217229307, -71.4033261070682], memory: 
         `There is a damp hush settling over the room. The sound of shuffling feet and rustling clothes as we cram together in the stuffy space, a knee poking into a back here and an elbow jammed into a ribcage there. We shift uncomfortably for a moment, and out of the corner of our eyes, we catch a glimpse of quivering lips, of hands robotically moving to wipe away endless fast tears, of red red red eyes looking out upon the sea of bodies without really seeing us. They are searching for someone. And that someone is gone.
 Sweat beads on our necks as we wait and rolls slowly down our aching backs. We focus on that, trying not to keep looking at the tears slowly flooding the room, trying to keep our own thoughts on the present. The man in all white robes comes and informs us we will be moving to a different space because there isn’t enough room for everyone here. More and more people keep coming.
@@ -30,15 +32,15 @@ And then going out into the world and trying to create a sense of normalcy. We d
 
 
 Life would move on without us in it, swim practices would continue. Classes would continue. Deadlines, races, internships, jobs, graduation, everything would continue if we weren’t here. Except maybe there would be that one person who, like us, didn’t even know who we were and yet they couldn’t keep moving forward.
-`, year: 'Sophomore' },
-    { name: 'Katherine Moran Aquatic Center', position: [41.83033143131877, -71.3971432825428], memory: 'Poo', year: 'Freshman' },
-    { name: 'Hegeman Hall', position: [41.825681871605966, -71.4005603063427], memory: 'Sophomore year dorm.', year: 'Sophomore' },
-    { name: 'Hope College', position: [41.82680252687402, -71.40381810624025], memory: 'Freshman + Sophomore year dorm.', year: 'Freshman' },
-    { name: 'Home', position: [38.572698308170835, -121.38795067728698], memory: 'CS19 during the pandemic.', year: 'Freshman'},
-    { name: 'Home', position: [39.26853838311791, -119.94829104194658], memory: 'Going back during the summer.', year: 'Sophomore'},
-    { name: 'Dorm', position: [34.071752188995454, -118.45289062801939], memory: 'Dorm', year: 'Junior'},
-    { name: 'Meinitz Hall', position: [34.076369229393016, -118.44036077560264], memory: 'Classroom', year: 'Junior'},
-    { name: 'Home', position: [37.79464219952082, -122.43754416370119], memory: 'Going back during the summer.', year: 'Senior'},
-    { name: 'Home', position: [32.69038738598935, -117.18749154352908], memory: 'First semester of the pandemic', year: 'Freshman'},
-    { name: 'Petty', position: [42.37060237177755, -71.12148616799445], memory: 'FETE', year: 'Junior'},
+`, classYear: 'Sophomore', year: new Date('2021-10-01'), id: '5' },
+    { name: 'Katherine Moran Aquatic Center', position: [41.83033143131877, -71.3971432825428], memory: 'Poo', classYear: 'Freshman', year: new Date('2020-10-01'), id: '6' },
+    { name: 'Hegeman Hall', position: [41.825681871605966, -71.4005603063427], memory: 'Sophomore year dorm.', classYear: 'Sophomore', year: new Date('2021-10-01'), id: '7' },
+    { name: 'Hope College', position: [41.82680252687402, -71.40381810624025], memory: 'Freshman + Sophomore year dorm.', classYear: 'Freshman', year: new Date('2020-10-01'), id: '8' },
+    { name: 'Home', position: [38.572698308170835, -121.38795067728698], memory: 'CS19 during the pandemic.', classYear: 'Freshman', year: new Date('2020-10-01'), id: '9' },
+    { name: 'Home', position: [39.26853838311791, -119.94829104194658], memory: 'Going back during the summer.', classYear: 'Sophomore', year: new Date('2021-10-01'), id: '10' },
+    { name: 'Dorm', position: [34.071752188995454, -118.45289062801939], memory: 'Dorm', classYear: 'Junior', year: new Date('2022-10-01'), id: '11' },
+    { name: 'Meinitz Hall', position: [34.076369229393016, -118.44036077560264], memory: 'Classroom', classYear: 'Junior', year: new Date('2022-10-01'), id: '12' },
+    { name: 'Home', position: [37.79464219952082, -122.43754416370119], memory: 'Going back during the summer.', classYear: 'Senior', year: new Date('2023-10-01'), id: '13' },
+    { name: 'Home', position: [32.69038738598935, -117.18749154352908], memory: 'First semester of the pandemic', classYear: 'Freshman', year: new Date('2020-10-01'), id: '14' },
+    { name: 'Petty', position: [42.37060237177755, -71.12148616799445], memory: 'FETE', classYear: 'Junior', year: new Date('2022-10-01'), id: '15' },
     ];
