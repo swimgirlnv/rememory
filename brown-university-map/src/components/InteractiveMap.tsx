@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents } from "
 import { LatLngExpression } from "leaflet";
 import { MarkerData, PathData } from "../data/types";
 import { v4 as uuidv4 } from "uuid";
+import L from "leaflet";
 
 const InteractiveMap: React.FC<{
   isEditingMode: boolean;
@@ -53,6 +54,13 @@ const InteractiveMap: React.FC<{
     return null;
   };
 
+  const wandIcon = L.icon({
+    iconUrl: 'https://images.ctfassets.net/3prze68gbwl1/assetglossary-17su9wok1ui0z7w/c4c4bdcdf0d0f86447d3efc450d1d081/map-marker.png',
+    iconSize: [30, 30],
+    iconAnchor: [25, 25],
+    popupAnchor: [-10, 0]
+  });
+
   return (
     <MapContainer center={[41.8268, -71.4025]} zoom={15} style={{ height: "100vh", width: "100%" }}>
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
@@ -60,7 +68,7 @@ const InteractiveMap: React.FC<{
 
       {/* Render existing markers */}
       {markers.map((marker) => (
-        <Marker key={marker.id} position={[marker.lat, marker.lng]}>
+        <Marker key={marker.id} icon={wandIcon} position={[marker.lat, marker.lng]}>
           <Popup>
             <p>{marker.name}</p>
             {isEditingMode && (
