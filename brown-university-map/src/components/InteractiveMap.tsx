@@ -33,6 +33,7 @@ const InteractiveMap: React.FC<{
 }) => {
   const [selectedPathId, setSelectedPathId] = useState<string | null>(null);
 
+  console.log(onAddPath);
   const MapClickHandler = () => {
     useMapEvents({
       click(e) {

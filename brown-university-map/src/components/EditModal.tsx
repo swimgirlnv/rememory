@@ -26,7 +26,7 @@ const EditModal: React.FC<{
           onChange={(e) => setName(e.target.value)}
           placeholder="Name"
         />
-        <TipTapEditor content={memory} onUpdate={setMemory} />
+        <TipTapEditor initialContent={memory} onUpdate={setMemory} />
         <button onClick={handleSave}>Save</button>
         <button onClick={onClose}>Cancel</button>
       </div>

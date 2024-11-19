@@ -12,7 +12,7 @@ const MapContainer: React.FC<{
   mapZoom: number;
   onBuildingClick: (buildingName: string) => void;
   onLocationChange: (locationName: string) => void;
-}> = ({ mapCenter, mapZoom, onBuildingClick, onLocationChange }) => {
+}> = ({ onLocationChange }) => {
   const [isEditingMode, setIsEditingMode] = useState(false);
   const [isPathEditMode, setIsPathEditMode] = useState(false);
   const [selectedYears, setSelectedYears] = useState<string[]>(["Freshman", "Sophomore", "Junior", "Senior"]);
@@ -79,7 +79,7 @@ const MapContainer: React.FC<{
         markers: selectedMarkers,
         name: `Path ${selectedMarkers.length} Markers`,
         memory: "",
-        year: new Date().toISOString(),
+        year: new Date(),
         classYear: "",
       };
 
@@ -100,11 +100,6 @@ const MapContainer: React.FC<{
     setSelectedYears((prevYears) =>
       prevYears.includes(year) ? prevYears.filter((y) => y !== year) : [...prevYears, year]
     );
-  };
-
-  const handleEditPath = (pathId: string) => {
-    console.log(`Editing path: ${pathId}`);
-    // Add your logic to handle path editing (e.g., show a form to edit path details)
   };
 
   const openEditModal = (type: 'marker' | 'path', id: string) => {

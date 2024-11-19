@@ -58,7 +58,7 @@ const MapMarker: React.FC<BuildingMarkerProps> = ({
     opacity={isSelected ? 0.7 : 1} // Adjust opacity or add a custom style to show selection
   >
     <Popup>
-      <h3>{name}</h3>
+      <h3>{name}, {classYear}, {year.getFullYear()}</h3>
       <p>{memory.length > 100 ? `${memory.slice(0, 100)}...` : memory}</p>
 
       {/* Conditionally render edit/delete buttons in editing mode */}
