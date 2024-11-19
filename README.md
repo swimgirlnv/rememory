@@ -2,6 +2,8 @@
 
 ENGL 1050J Multimedia Storytelling 11/6/2024
 Final Project Pitch Link to prototype: https://rememory-one.vercel.app/
+Link to Draft 1: https://docs.google.com/document/d/e/2PACX-1vRq475QjO9aEcY9OC4DPjU3mK-57qeybHmtDfp0IWL-03G7Kzldd_mrOwXIeyXjgKk_gAAMP5BGB6fm/pub 
+Link to Draft 2: https://docs.google.com/document/d/e/2PACX-1vRZSIlIG_7aLuy82nO7uxqFkWhKnqCHckgAptehPPR4VnMsF0ks6hj4TuNOKPeRmzCtf7DD6FyfCbUM/pub 
 
 ## Personal Statement
 I am a digital media developer and interdisciplinary creative with a strong background in interactive storytelling, web development, and data visualization. My practice focuses on blending narrative, technology, and design to create immersive, user-driven experiences. Currently, I am building an interactive map app that allows users to explore locations through memories, media, and embedded routes, transforming static spaces into dynamic narratives. This project builds on my interest in how digital tools can deepen connections with physical spaces, making information, memories, and personal narratives accessible and interactive.
