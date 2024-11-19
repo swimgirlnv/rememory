@@ -1,183 +1,238 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, useMap } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import { LatLngExpression } from 'leaflet';
-import { buildings } from '../data/buildings';
-import { routes } from '../data/routes';
-import MapMarker from './MapMarker';
-import MapRoute from './MapRoute';
-import { MarkerData } from '../data/types';
-import { addDoc, collection, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '../../firebaseConfig';
-import EditModal from './EditModal';
+import React, { useState, useEffect } from "react";
+import InteractiveMap from "./InteractiveMap";
+import { locations } from "../data/locations";
+import { MarkerData, PathData } from "../data/types";
+import { collection, getDocs, addDoc, updateDoc, doc } from "firebase/firestore";
+import { db } from "../../firebaseConfig";
+import { v4 as uuidv4 } from "uuid";
+import EditModal from "./EditModal";
 
-interface MapComponentProps {
-  selectedYears: string[];
-  mapCenter: LatLngExpression;
+const MapContainer: React.FC<{
+  mapCenter: [number, number];
   mapZoom: number;
   onBuildingClick: (buildingName: string) => void;
-  isEditingMode: boolean;
-  showPathModal: boolean;
-  onMakePath: () => void;
-}
-
-const MapComponent: React.FC<MapComponentProps> = ({ selectedYears, mapCenter, mapZoom, onBuildingClick, isEditingMode, showPathModal, onMakePath }) => {
-  // Modal state for displaying detailed content
-  const [showModal, setShowModal] = useState(false);
-  const [modalContent, setModalContent] = useState<{ title: string; content: string; media?: any } | null>(null);
+  onLocationChange: (locationName: string) => void;
+}> = ({ mapCenter, mapZoom, onBuildingClick, onLocationChange }) => {
+  const [isEditingMode, setIsEditingMode] = useState(false);
+  const [isPathEditMode, setIsPathEditMode] = useState(false);
+  const [selectedYears, setSelectedYears] = useState<string[]>(["Freshman", "Sophomore", "Junior", "Senior"]);
   const [markers, setMarkers] = useState<MarkerData[]>([]);
+  const [paths, setPaths] = useState<PathData[]>([]);
   const [selectedMarkers, setSelectedMarkers] = useState<string[]>([]);
-  const [newMarker, setNewMarker] = useState<Partial<MarkerData> | null>(null);
-  const [memory, setMemory] = useState<string>('');
-  const [name, setName] = useState<string>('');
-  const [year, setYear] = useState<Date>(new Date());
-  const [classYear, setClassYear] = useState<string>('');
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<{ type: 'marker' | 'path'; id: string } | null>(null);
 
+  useEffect(() => {
+    const fetchMarkers = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "markers"));
+        const markerData = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as MarkerData[];
+        setMarkers(markerData);
+      } catch (error) {
+        console.error("Error fetching markers:", error);
+      }
+    };
 
-  const MapUpdater = () => {
-    const map = useMap();
+    const fetchPaths = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "paths"));
+        const pathData = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as PathData[];
+        setPaths(pathData);
+      } catch (error) {
+        console.error("Error fetching paths:", error);
+      }
+    };
 
-    useEffect(() => {
-      map.setView(mapCenter, mapZoom);
-    }, [map, mapCenter, mapZoom]);
+    fetchMarkers();
+    fetchPaths();
+  }, []);
 
-    return null;
+  const toggleEditingMode = () => {
+    setIsEditingMode((prev) => !prev);
+    setIsPathEditMode(false); // Reset Path Edit Mode when exiting edit mode
+    setSelectedMarkers([]); // Clear selected markers when exiting edit mode
   };
 
-  const handleReadMore = (title: string, content: string, media?: any) => {
-    setModalContent({ title, content, media });
-    setShowModal(true);
+  const togglePathEditMode = () => {
+    setIsPathEditMode((prev) => !prev);
   };
 
-  // Define colors for each year
-  const routeColors: Record<string, string> = {
-    Freshman: 'blue',
-    Sophomore: 'green',
-    Junior: 'orange',
-    Senior: 'purple',
-  };
-
-  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
-  const [selectedMarker, setSelectedMarker] = useState<MarkerData | null>(null);
-
-  // Handler to open the modal for a specific marker
-  const handleEditMarker = (marker: MarkerData) => {
-    setSelectedMarker(marker);
-    setIsEditModalVisible(true);
-  };
-
-  // Close modal and reset selected marker
-  const handleCloseEditModal = () => {
-    setIsEditModalVisible(false);
-    setSelectedMarker(null);
-  };
-
-  const handleDeleteMarker = async (id: string) => {
-    await deleteDoc(doc(db, 'markers', id));
-    setMarkers((prev) => prev.filter(marker => marker.id !== id));
-  };
-
-  const handleSaveMarker = async () => {
-    if (newMarker?.lat && newMarker.lng && name && memory) {
-      console.log("Saving new marker:", newMarker);
-      const docRef = await addDoc(collection(db, 'markers'), { lat: newMarker.lat, lng: newMarker.lng, name, memory });
-      setMarkers((prev) => [...prev, { id: docRef.id, lat: newMarker.lat, lng: newMarker.lng, name, memory } as MarkerData]);
-      setNewMarker(null); // Reset new marker state after saving
-      setName(''); // Reset name input
-      setMemory(''); // Reset memory input
-      setYear(new Date()); // Reset year input
-      setClassYear(''); // Reset class year input
-    } else {
-      console.warn("Marker data is incomplete. Cannot save marker.");
+  const handleAddMarker = async (newMarker: MarkerData) => {
+    try {
+      const docRef = await addDoc(collection(db, "markers"), newMarker);
+      setMarkers((prev) => [...prev, { ...newMarker, id: docRef.id }]);
+    } catch (error) {
+      console.error("Error adding marker:", error);
     }
   };
 
-  const handleSelectMarker = (id: string) => {
-    if (isEditingMode) {
-      setSelectedMarkers((prev) => (prev.includes(id) ? prev.filter((mid) => mid !== id) : [...prev, id]));
+  const handleCreatePath = async () => {
+    if (selectedMarkers.length > 1) {
+      const newPath: PathData = {
+        id: uuidv4(),
+        markers: selectedMarkers,
+        name: `Path ${selectedMarkers.length} Markers`,
+        memory: "",
+        year: new Date().toISOString(),
+        classYear: "",
+      };
+
+      try {
+        const docRef = await addDoc(collection(db, "paths"), newPath);
+        setPaths((prev) => [...prev, { ...newPath, id: docRef.id }]);
+        setSelectedMarkers([]); // Clear selected markers after path creation
+        console.log("Path created:", newPath);
+      } catch (error) {
+        console.error("Error creating path:", error);
+      }
+    } else {
+      alert("Please select at least two markers to create a path.");
+    }
+  };
+
+  const handleCheckboxChange = (year: string) => {
+    setSelectedYears((prevYears) =>
+      prevYears.includes(year) ? prevYears.filter((y) => y !== year) : [...prevYears, year]
+    );
+  };
+
+  const handleEditPath = (pathId: string) => {
+    console.log(`Editing path: ${pathId}`);
+    // Add your logic to handle path editing (e.g., show a form to edit path details)
+  };
+
+  const openEditModal = (type: 'marker' | 'path', id: string) => {
+    setEditingItem({ type, id });
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveEdit = async (updatedData: { name: string; memory: string }) => {
+    if (editingItem) {
+      const { type, id } = editingItem;
+  
+      try {
+        if (type === 'marker') {
+          const markerIndex = markers.findIndex((m) => m.id === id);
+          if (markerIndex !== -1) {
+            const updatedMarker = { ...markers[markerIndex], ...updatedData };
+            await updateDoc(doc(db, 'markers', id), updatedMarker);
+            setMarkers((prev) =>
+              prev.map((m) => (m.id === id ? updatedMarker : m))
+            );
+          }
+        } else if (type === 'path') {
+          const pathIndex = paths.findIndex((p) => p.id === id);
+          if (pathIndex !== -1) {
+            const updatedPath = { ...paths[pathIndex], ...updatedData };
+            await updateDoc(doc(db, 'paths', id), updatedPath);
+            setPaths((prev) =>
+              prev.map((p) => (p.id === id ? updatedPath : p))
+            );
+          }
+        }
+  
+        setIsEditModalOpen(false);
+        setEditingItem(null);
+      } catch (error) {
+        console.error('Error updating Firestore:', error);
+      }
     }
   };
 
   return (
-    <>
-      <MapContainer center={mapCenter} zoom={mapZoom} style={{ height: '100vh', width: '100%' }}>
-        <MapUpdater />
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution="&copy; OpenStreetMap contributors"
-        />
-
-        {/* MapMarker instances with the onEdit prop */}
-        {markers.map(marker => (
-          <MapMarker
-            key={marker.id}
-            position={[marker.lat, marker.lng]}
-            name={marker.name}
-            memory={marker.memory}
-            year={marker.year}
-            classYear={marker.classYear}
-            isEditingMode={isEditingMode}
-            isSelected={selectedMarkers.includes(marker.id)}
-            onEdit={() => handleEditMarker(marker)}
-            onDelete={() => handleDeleteMarker(marker.id)}
-            onReadMore={() => handleReadMore(marker.name, marker.memory)}
-            onClick={() => handleSelectMarker(marker.id)}
-          />
-        ))}
-
-      {/* EditModal appears when isEditModalVisible is true */}
-      {isEditModalVisible && selectedMarker && (
-        <EditModal
-          title="Edit Marker"
-          name={selectedMarker.name}
-          memory={selectedMarker.memory}
-          year={selectedMarker.year}
-          classYear={selectedMarker.classYear}
-          onSave={async (updatedMarker: any) => {
-            await handleSaveMarker(updatedMarker);
-            handleCloseEditModal();
-          }}
-          onCancel={handleCloseEditModal}
-          onNameChange={(newName: any) => setSelectedMarker({ ...selectedMarker, name: newName })}
-          onMemoryChange={(newMemory: any) => setSelectedMarker({ ...selectedMarker, memory: newMemory })}
-          onYearChange={(newYear: any) => setSelectedMarker({ ...selectedMarker, year: newYear })}
-        />
+    <div>
+      {/* Editing Mode Toggle */}
+      {!isPathEditMode && (
+        <button onClick={toggleEditingMode}>
+          {isEditingMode ? "Disable Editing Mode" : "Enable Editing Mode"}
+        </button>
       )}
-
-        {/* Route Polylines based on selected year */}
-        {routes
-          .filter((route) => selectedYears.includes(route.year))
-          .map((route, index) => (
-            <MapRoute key={index} route={route} color={routeColors[route.year]} />
-          ))}
-      </MapContainer>
-
-      {showModal && modalContent && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2>{modalContent.title}</h2>
-            <p>{modalContent.content}</p>
-            {modalContent.media?.images &&
-              modalContent.media.images.map((src: string, i: number) => <img key={i} src={src} alt="" />)}
-            {modalContent.media?.videoUrl && (
-              <video controls>
-                <source src={modalContent.media.videoUrl} type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
-            )}
-            {modalContent.media?.audioUrl && (
-              <audio controls>
-                <source src={modalContent.media.audioUrl} type="audio/mp3" />
-                Your browser does not support the audio element.
-              </audio>
-            )}
-            <button onClick={() => setShowModal(false)}>Close</button>
-          </div>
+  
+      {/* Path Edit Mode Toggle */}
+      {isEditingMode && (
+        <button onClick={togglePathEditMode}>
+          {isPathEditMode ? "Disable Edit Path Mode" : "Enable Edit Path Mode"}
+        </button>
+      )}
+  
+      {/* Display Selected Markers and Create Path */}
+      {isPathEditMode && (
+        <div className="path-edit-display">
+          <h3>Selected Markers for Path</h3>
+          <ul>
+            {selectedMarkers.map((markerId) => {
+              const marker = markers.find((m) => m.id === markerId);
+              return <li key={markerId}>{marker?.name || "Unnamed Marker"}</li>;
+            })}
+          </ul>
+          <button onClick={handleCreatePath}>Create Path</button>
         </div>
       )}
-    </>
-  );
-};
+  
+      {/* Year Filters */}
+      <div className="filters">
+        {["Freshman", "Sophomore", "Junior", "Senior"].map((year) => (
+          <label key={year}>
+            <input
+              type="checkbox"
+              checked={selectedYears.includes(year)}
+              onChange={() => handleCheckboxChange(year)}
+            />
+            {year}
+          </label>
+        ))}
+      </div>
+  
+      {/* Location Selector */}
+      <div className="location-selector">
+        <select onChange={(e) => onLocationChange(e.target.value)}>
+          {locations.map((loc) => (
+            <option key={loc.name} value={loc.name}>
+              {loc.name}
+            </option>
+          ))}
+        </select>
+      </div>
+  
+      {/* Interactive Map */}
+      <InteractiveMap
+        isEditingMode={isEditingMode}
+        isPathEditMode={isPathEditMode}
+        markers={markers}
+        paths={paths}
+        selectedMarkers={selectedMarkers}
+        setSelectedMarkers={setSelectedMarkers}
+        onAddMarker={handleAddMarker}
+        onDeleteMarker={(markerId) =>
+          setMarkers((prev) => prev.filter((marker) => marker.id !== markerId))
+        }
+        onAddPath={(newPath) => setPaths((prev) => [...prev, newPath])}
+        onDeletePath={(pathId) =>
+          setPaths((prev) => prev.filter((path) => path.id !== pathId))
+        }
+        onEditPath={(pathId) => openEditModal('path', pathId)} // Open modal for path
+        onEditMarker={(markerId) => openEditModal('marker', markerId)} // Open modal for marker
+      />
 
-export default MapComponent;
+      <EditModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSave={handleSaveEdit}
+        data={
+          editingItem
+            ? editingItem.type === 'marker'
+              ? markers.find((m) => m.id === editingItem.id) || null
+              : paths.find((p) => p.id === editingItem.id) || null
+            : null
+        }
+      />
+    </div>
+  );
+}
+export default MapContainer;

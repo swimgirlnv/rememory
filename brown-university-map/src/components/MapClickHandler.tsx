@@ -1,8 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// MapClickHandler.tsx
-
-import React from 'react';
-// import { useMapEvents } from 'react-leaflet';
+import { useMapEvents } from 'react-leaflet';
 
 interface MapClickHandlerProps {
   isEditMode: boolean;
@@ -10,32 +6,16 @@ interface MapClickHandlerProps {
 }
 
 const MapClickHandler: React.FC<MapClickHandlerProps> = ({ isEditMode, setNewMarker }) => {
-
-    const handleMapClick = (event: any) => {
-        if (!isEditMode) return;
-
-        // Get latitude and longitude from the event
-        const { latLng } = event;
-        const lat = latLng.lat();
-        const lng = latLng.lng();
-
-        // Trigger the add marker function passed as a prop
+  useMapEvents({
+    click: (event) => {
+      if (isEditMode) {
+        const { lat, lng } = event.latlng; // Extract latitude and longitude from the map click event
         setNewMarker(lat, lng);
-    };
+      }
+    },
+  });
 
-    return (
-        <div className="map-click-handler" onClick={handleMapClick}>
-            {/* This div captures map clicks */}
-        </div>
-    );
-//   useMapEvents({
-//     click: (e) => {
-//       if (isEditMode) {
-//         setNewMarker(e.latlng.lat, e.latlng.lng);
-//       }
-//     },
-//   });
-//   return null;
+  return null; // This component does not render anything; it just handles events
 };
 
 export default MapClickHandler;
