@@ -16,7 +16,7 @@ const NewMarkerForm: React.FC<NewMarkerFormProps> = ({ lat, lng, onClose }) => {
 
     const handleSave = () => {
         // Save marker data to the database or app state
-        console.log({ lat, lng, name, memory, year, classYear, media });
+        //console.log({ lat, lng, name, memory, year, classYear, media });
         onClose(); // Close form after saving
     };
 

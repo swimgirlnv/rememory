@@ -1,6 +1,44 @@
 /* ReadMoreModal.css */
 
-.read-more-overlay {
+
+/* .modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 600px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+.modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.media-preview img {
+  border-radius: 4px;
+  margin: 5px;
+}
+
+.video-preview,
+.audio-preview {
+  margin-top: 10px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+} */
+
+
+
+.modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -14,7 +52,7 @@
     z-index: 1000;
   }
   
-  .read-more-content {
+  .modal-content {
     position: relative;
     background: #fff;
     border-radius: 8px;
@@ -28,14 +66,14 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   }
   
-  .read-more-header {
+  .modal-header {
     margin-bottom: 10px;
     font-size: 1.5rem;
     font-weight: bold;
     text-align: center;
   }
   
-  .read-more-text {
+  .modal-text {
     flex: 1;
     overflow-y: auto; /* Allows scrolling within the content */
     padding: 10px;
@@ -44,16 +82,16 @@
     margin: 10px 0;
   }
   
-  .read-more-image,
-  .read-more-video,
-  .read-more-audio {
+  .modal-image,
+  .modal-video,
+  .modal-audio {
     max-width: 100%;
     height: auto;
     margin-bottom: 10px;
     border-radius: 4px;
   }
   
-  .read-more-close-button {
+  .modal-close-button {
     padding: 10px 20px;
     background-color: #007bff;
     color: #fff;

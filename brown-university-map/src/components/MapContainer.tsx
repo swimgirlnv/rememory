@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import InteractiveMap from "./InteractiveMap";
 import { locations } from "../data/locations";
 import { MarkerData, PathData } from "../data/types";
-import { collection, getDocs, addDoc, updateDoc, doc, deleteDoc, onSnapshot } from "firebase/firestore";
+import { collection, getDocs, addDoc, updateDoc, doc, deleteDoc, onSnapshot, getDoc } from "firebase/firestore";
 import { db } from "../../firebaseConfig";
 import { v4 as uuidv4 } from "uuid";
 import EditModal from "./EditModal";
@@ -113,7 +113,7 @@ const MapContainer: React.FC<{
         markers: selectedMarkers,
         name: `Path ${selectedMarkers.length} Markers`,
         memory: "",
-        year: new Date(),
+        year: new Date().getFullYear(),
         classYear: "",
       };
 
@@ -121,7 +121,7 @@ const MapContainer: React.FC<{
         const docRef = await addDoc(collection(db, "paths"), newPath);
         setPaths((prev) => [...prev, { ...newPath, id: docRef.id }]);
         setSelectedMarkers([]); // Clear selected markers after path creation
-        console.log("Path created:", newPath);
+        //console.log("Path created:", newPath);
       } catch (error) {
         console.error("Error creating path:", error);
       }
@@ -140,31 +140,45 @@ const MapContainer: React.FC<{
     setEditingItem({ type, id });
     setIsEditModalOpen(true);
   };
-
-  const sanitizeData = (data: Record<string, any>) => {
-    return Object.fromEntries(
-      Object.entries(data).filter(([_, value]) => value !== undefined)
-    );
-  };
   
-  const handleSaveEdit = async (updatedData: { name: string; memory: string; media: string[] }) => {
+  const handleSaveEdit = async (updatedData: {
+    name: string;
+    memory: string;
+    media: { images: string[]; videoUrl: string | null; audioUrl: string | null };
+    classYear: string;
+    year: number;
+  }) => {
     if (!editingItem) return;
   
     const { type, id } = editingItem;
-    const sanitizedMedia = {
-      images: updatedData.media.filter((url) => /\.(jpeg|jpg|png|gif)$/i.test(url)),
-      videoUrl: updatedData.media.find((url) => /\.(mp4|mov)$/i.test(url)) || null,
-      audioUrl: updatedData.media.find((url) => /\.(mp3|wav)$/i.test(url)) || null,
-    };
-  
-    const sanitizedData =
-      type === "marker"
-        ? sanitizeData({ ...markers.find((m) => m.id === id), ...updatedData, media: sanitizedMedia })
-        : sanitizeData({ ...paths.find((p) => p.id === id), ...updatedData, media: sanitizedMedia });
   
     try {
-      const ref = doc(db, type === "marker" ? "markers" : "paths", id);
-      await updateDoc(ref, sanitizedData);
+      const docRef = doc(db, type === "marker" ? "markers" : "paths", id);
+  
+      // Check if the document exists
+      const docSnap = await getDoc(docRef);
+      if (!docSnap.exists()) {
+        console.error(`Document with ID ${id} does not exist.`);
+        return;
+      }
+  
+      // Sanitize the media object to avoid undefined values
+      const sanitizedMedia = {
+        images: updatedData.media.images || [],
+        videoUrl: updatedData.media.videoUrl || null,
+        audioUrl: updatedData.media.audioUrl || null,
+      };
+  
+      const sanitizedData = {
+        name: updatedData.name,
+        memory: updatedData.memory,
+        media: sanitizedMedia,
+        classYear: updatedData.classYear,
+        year: updatedData.year,
+      };
+  
+      // Update the document
+      await updateDoc(docRef, sanitizedData);
       console.log(`${type} updated successfully.`);
     } catch (error) {
       console.error(`Error updating ${type}:`, error);
@@ -176,7 +190,7 @@ const updateMarker = async (markerId: string, updatedData: Partial<MarkerData>) 
   try {
     const markerRef = doc(db, "markers", markerId);
     await updateDoc(markerRef, updatedData);
-    console.log("Marker updated:", markerId);
+    //console.log("Marker updated:", markerId);
   } catch (error) {
     console.error("Error updating marker:", error);
   }
@@ -187,7 +201,7 @@ const updatePath = async (pathId: string, updatedData: Partial<PathData>) => {
   try {
     const pathRef = doc(db, "paths", pathId);
     await updateDoc(pathRef, updatedData);
-    console.log("Path updated:", pathId);
+    //console.log("Path updated:", pathId);
   } catch (error) {
     console.error("Error updating path:", error);
   }
@@ -198,7 +212,7 @@ const deleteMarker = async (markerId: string) => {
   try {
     const markerRef = doc(db, "markers", markerId);
     await deleteDoc(markerRef);
-    console.log("Marker deleted from Firestore:", markerId);
+    //console.log("Marker deleted from Firestore:", markerId);
     // Update local state manually
     setMarkers((prev) => prev.filter((m) => m.id !== markerId));
   } catch (error) {
@@ -211,7 +225,7 @@ const deletePath = async (pathId: string) => {
   try {
     const pathRef = doc(db, "paths", pathId);
     await deleteDoc(pathRef);
-    console.log("Path deleted:", pathId);
+    //console.log("Path deleted:", pathId);
     setPaths((prev) => prev.filter((p) => p.id !== pathId)); // Update local state
   } catch (error) {
     console.error("Error deleting path:", error);

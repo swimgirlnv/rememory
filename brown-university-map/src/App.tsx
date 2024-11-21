@@ -14,14 +14,14 @@ function App() {
 
   const handleBuildingClick = (buildingName: string) => {
     if (scavengerHuntSteps[currentHuntStep].targetBuilding === buildingName) {
-      console.log(`Congrats! ${scavengerHuntSteps[currentHuntStep].reward}`);
+      //console.log(`Congrats! ${scavengerHuntSteps[currentHuntStep].reward}`);
       if (currentHuntStep + 1 < scavengerHuntSteps.length) {
         setCurrentHuntStep(currentHuntStep + 1);
       } else {
         setHuntCompleted(true);
       }
     } else {
-      console.log("That's not the correct location. Keep looking!");
+      //console.log("That's not the correct location. Keep looking!");
     }
   };
 

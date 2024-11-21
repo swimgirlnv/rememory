@@ -49,8 +49,8 @@ const InteractiveMap: React.FC<{
 
   const closeModal = () => setSelectedDetails(null);
 
-  console.log(onAddPath);
-  
+  //console.log(onAddPath);
+
   const MapClickHandler = () => {
     useMapEvents({
       click(e) {
@@ -97,7 +97,7 @@ const InteractiveMap: React.FC<{
                       memory: marker.memory,
                       year: marker.year,
                       classYear: marker.classYear,
-                      media: marker.media || [],
+                      media: Array.isArray(marker.media) ? marker.media : [],
                     },
                   })}
                 >
