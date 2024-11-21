@@ -31,7 +31,12 @@ const ViewDetailsModal: React.FC<{
           {media?.images?.length > 0 && (
             <div className="image-gallery">
               {media.images.map((url, index) => (
-                <img key={index} src={url} alt={`media-${index}`} style={{ maxWidth: '100px', margin: '5px' }} />
+                <img
+                  key={index}
+                  src={url}
+                  alt={`media-${index}`}
+                  style={{ maxWidth: '100px', margin: '5px' }}
+                />
               ))}
             </div>
           )}

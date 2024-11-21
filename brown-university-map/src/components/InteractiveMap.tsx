@@ -28,7 +28,6 @@ const InteractiveMap: React.FC<{
   setSelectedMarkers,
   onAddMarker,
   onDeleteMarker,
-  onAddPath,
   onDeletePath,
   onEditPath,
   onEditMarker,
@@ -61,7 +60,7 @@ const InteractiveMap: React.FC<{
             lng: e.latlng.lng,
             name: "Unnamed Marker",
             memory: "",
-            year: new Date(),
+            year: new Date().getFullYear(),
             classYear: "",
           });
         }
@@ -171,7 +170,7 @@ const InteractiveMap: React.FC<{
             popupclose: () => setSelectedPathId(null),
           }}
         >
-          <p>Path Options</p>
+          <p>{paths.find((p) => p.id === selectedPathId)?.name}</p>
           <button onClick={() => onEditPath(selectedPathId)}>Edit</button>
           <button
             onClick={() => {
@@ -188,7 +187,27 @@ const InteractiveMap: React.FC<{
     <ViewDetailsModal
     isOpen={!!selectedDetails}
     onClose={closeModal}
-    data={selectedDetails?.data || null}
+    data={
+      selectedDetails?.data
+          ? {
+                ...selectedDetails.data,
+                year: typeof selectedDetails.data.year === "string"
+                    ? parseInt(selectedDetails.data.year, 10)
+                    : selectedDetails.data.year,
+                media: {
+                    images: Array.isArray(selectedDetails.data.media)
+                        ? selectedDetails.data.media.filter((url) => /\.(jpeg|jpg|png|gif)$/i.test(url))
+                        : [],
+                    videoUrl: Array.isArray(selectedDetails.data.media)
+                        ? selectedDetails.data.media.find((url) => /\.(mp4|mov)$/i.test(url)) || null
+                        : null,
+                    audioUrl: Array.isArray(selectedDetails.data.media)
+                        ? selectedDetails.data.media.find((url) => /\.(mp3|wav)$/i.test(url)) || null
+                        : null,
+                },
+            }
+          : null
+    }
     />
     </>
   );

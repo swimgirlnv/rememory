@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import TipTapEditor from './TipTapEditor';
 import uploadFile from './FirebaseUploader';
 
@@ -21,16 +21,31 @@ const EditModal: React.FC<{
     year: number;
   } | null;
 }> = ({ isOpen, onClose, onSave, data }) => {
-  const [name, setName] = useState(data?.name || '');
-  const [memory, setMemory] = useState(data?.memory || '');
+  const [name, setName] = useState('');
+  const [memory, setMemory] = useState('');
   const [media, setMedia] = useState({
-    images: data?.media?.images || [],
-    videoUrl: data?.media?.videoUrl || null,
-    audioUrl: data?.media?.audioUrl || null,
+    images: [] as string[],
+    videoUrl: null as string | null,
+    audioUrl: null as string | null,
   });
-  const [classYear, setClassYear] = useState(data?.classYear || 'Freshman');
-  const [year, setYear] = useState(data?.year || new Date().getFullYear());
+  const [classYear, setClassYear] = useState('Freshman');
+  const [year, setYear] = useState(new Date().getFullYear());
   const [isUploading, setIsUploading] = useState(false);
+
+  // Populate fields with existing data when the modal opens
+  useEffect(() => {
+    if (data) {
+      setName(data.name || '');
+      setMemory(data.memory || '');
+      setMedia({
+        images: data.media.images || [],
+        videoUrl: data.media.videoUrl || null,
+        audioUrl: data.media.audioUrl || null,
+      });
+      setClassYear(data.classYear || 'Freshman');
+      setYear(data.year || new Date().getFullYear());
+    }
+  }, [data]);
 
   const handleMediaUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) {
@@ -77,12 +92,12 @@ const EditModal: React.FC<{
     'Alumni',
   ];
 
-  const yearOptions = Array.from({ length: 150 }, (_, i) => new Date().getFullYear() - i); // Generate years from current year back to 150 years ago
+  const yearOptions = Array.from({ length: 150 }, (_, i) => new Date().getFullYear() - i); // Generate years
 
   return (
     <div className="modal-overlay">
       <div className="modal-content">
-        <h2>Edit {data.name}</h2>
+        <h2>Edit Marker: {data.name}</h2>
 
         {/* Name Input */}
         <label>
@@ -96,7 +111,7 @@ const EditModal: React.FC<{
         </label>
 
         {/* TipTap Editor for Memory */}
-        <TipTapEditor initialContent={data.memory} onUpdate={setMemory} />
+        <TipTapEditor initialContent={memory} onUpdate={setMemory} />
 
         {/* Class Year Dropdown */}
         <label>
@@ -134,16 +149,13 @@ const EditModal: React.FC<{
 
         {/* Media Preview */}
         <div className="media-preview">
-          {/* Display images */}
-          {media.images.length > 0 &&
-            media.images.map((url, index) => (
-              <div key={index} className="media-item">
-                <img src={url} alt={`media-${index}`} style={{ maxWidth: '100px', margin: '5px' }} />
-              </div>
-            ))}
-          {/* Display video */}
+          {media.images.map((url, index) => (
+            <div key={index} className="media-item">
+              <img src={url} alt={`media-${index}`} style={{ maxWidth: '100px', margin: '5px' }} />
+            </div>
+          ))}
           {media.videoUrl && (
-            <div className="video-preview">
+            <div>
               <strong>Video:</strong>
               <video controls style={{ maxWidth: '100%' }}>
                 <source src={media.videoUrl} type="video/mp4" />
@@ -151,9 +163,8 @@ const EditModal: React.FC<{
               </video>
             </div>
           )}
-          {/* Display audio */}
           {media.audioUrl && (
-            <div className="audio-preview">
+            <div>
               <strong>Audio:</strong>
               <audio controls>
                 <source src={media.audioUrl} type="audio/mpeg" />

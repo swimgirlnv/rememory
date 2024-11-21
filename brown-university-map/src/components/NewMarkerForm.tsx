@@ -7,13 +7,14 @@ interface NewMarkerFormProps {
     onSave: () => void;
 }
 
-const NewMarkerForm: React.FC<NewMarkerFormProps> = ({ lat, lng, onClose }) => {
+const NewMarkerForm: React.FC<NewMarkerFormProps> = ({ onClose }) => {
     const [name, setName] = useState('');
     const [memory, setMemory] = useState('');
     const [year, setYear] = useState('');
     const [classYear, setClassYear] = useState('');
     const [media, setMedia] = useState<File | null>(null);
 
+    console.log(media);
     const handleSave = () => {
         // Save marker data to the database or app state
         //console.log({ lat, lng, name, memory, year, classYear, media });

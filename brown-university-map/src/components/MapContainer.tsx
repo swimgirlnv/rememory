@@ -10,7 +10,6 @@ import EditModal from "./EditModal";
 const MapContainer: React.FC<{
   mapCenter: [number, number];
   mapZoom: number;
-  onBuildingClick: (buildingName: string) => void;
   onLocationChange: (locationName: string) => void;
 }> = ({ onLocationChange }) => {
   const [isEditingMode, setIsEditingMode] = useState(false);
@@ -26,26 +25,36 @@ const MapContainer: React.FC<{
     const unsubscribeMarkers = onSnapshot(collection(db, "markers"), (snapshot) => {
       const updatedMarkers = snapshot.docs.map((doc) => ({
         id: doc.id,
-        name: doc.data().name || "Unnamed Marker", // Provide default value
-        lat: doc.data().lat || 0, // Default to 0 if missing
-        lng: doc.data().lng || 0, // Default to 0 if missing
+        name: doc.data().name || "Unnamed Marker",
+        lat: doc.data().lat || 0,
+        lng: doc.data().lng || 0,
         memory: doc.data().memory || "",
-        year: doc.data().year || "",
+        year: doc.data().year || new Date().getFullYear(), // Default to current year
         classYear: doc.data().classYear || "",
+        media: {
+          images: doc.data().media?.images || [], // Ensure images array exists
+          videoUrl: doc.data().media?.videoUrl || null,
+          audioUrl: doc.data().media?.audioUrl || null,
+        },
       }));
-      setMarkers(updatedMarkers as MarkerData[]); // Cast to MarkerData[]
+      setMarkers(updatedMarkers as MarkerData[]);
     });
   
     const unsubscribePaths = onSnapshot(collection(db, "paths"), (snapshot) => {
       const updatedPaths = snapshot.docs.map((doc) => ({
         id: doc.id,
-        name: doc.data().name || "Unnamed Path", // Provide default value
-        markers: doc.data().markers || [], // Default to empty array
+        name: doc.data().name || "Unnamed Path",
+        markers: doc.data().markers || [],
         memory: doc.data().memory || "",
-        year: doc.data().year || "",
+        year: doc.data().year || new Date().getFullYear(), // Default to current year
         classYear: doc.data().classYear || "",
+        media: {
+          images: doc.data().media?.images || [],
+          videoUrl: doc.data().media?.videoUrl || null,
+          audioUrl: doc.data().media?.audioUrl || null,
+        },
       }));
-      setPaths(updatedPaths as PathData[]); // Cast to PathData[]
+      setPaths(updatedPaths as PathData[]);
     });
   
     return () => {
@@ -60,8 +69,18 @@ const MapContainer: React.FC<{
         const querySnapshot = await getDocs(collection(db, "markers"));
         const markerData = querySnapshot.docs.map((doc) => ({
           id: doc.id,
-          ...doc.data(),
-        })) as MarkerData[];
+          name: doc.data().name || "Unnamed Marker",
+          lat: doc.data().lat || 0,
+          lng: doc.data().lng || 0,
+          memory: doc.data().memory || "",
+          year: doc.data().year || new Date().getFullYear(),
+          classYear: doc.data().classYear || "",
+          media: {
+            images: doc.data().media?.images || [],
+            videoUrl: doc.data().media?.videoUrl || null,
+            audioUrl: doc.data().media?.audioUrl || null,
+          },
+        }));
         setMarkers(markerData);
       } catch (error) {
         console.error("Error fetching markers:", error);
@@ -165,8 +184,8 @@ const MapContainer: React.FC<{
       // Sanitize the media object to avoid undefined values
       const sanitizedMedia = {
         images: updatedData.media.images || [],
-        videoUrl: updatedData.media.videoUrl || null,
-        audioUrl: updatedData.media.audioUrl || null,
+        videoUrl: updatedData.media.videoUrl ?? null,
+        audioUrl: updatedData.media.audioUrl ?? null,
       };
   
       const sanitizedData = {
@@ -185,27 +204,26 @@ const MapContainer: React.FC<{
     }
   };
 
-  // Update Marker
-const updateMarker = async (markerId: string, updatedData: Partial<MarkerData>) => {
-  try {
-    const markerRef = doc(db, "markers", markerId);
-    await updateDoc(markerRef, updatedData);
-    //console.log("Marker updated:", markerId);
-  } catch (error) {
-    console.error("Error updating marker:", error);
-  }
-};
 
-// Update Path
-const updatePath = async (pathId: string, updatedData: Partial<PathData>) => {
-  try {
-    const pathRef = doc(db, "paths", pathId);
-    await updateDoc(pathRef, updatedData);
-    //console.log("Path updated:", pathId);
-  } catch (error) {
-    console.error("Error updating path:", error);
-  }
-};
+// const updateMarker = async (markerId: string, updatedData: Partial<MarkerData>) => {
+//   try {
+//     const markerRef = doc(db, "markers", markerId);
+//     await updateDoc(markerRef, updatedData);
+//     //console.log("Marker updated:", markerId);
+//   } catch (error) {
+//     console.error("Error updating marker:", error);
+//   }
+// };
+
+// const updatePath = async (pathId: string, updatedData: Partial<PathData>) => {
+//   try {
+//     const pathRef = doc(db, "paths", pathId);
+//     await updateDoc(pathRef, updatedData);
+//     //console.log("Path updated:", pathId);
+//   } catch (error) {
+//     console.error("Error updating path:", error);
+//   }
+// };
 
 // Delete Marker
 const deleteMarker = async (markerId: string) => {
@@ -303,18 +321,40 @@ const deletePath = async (pathId: string) => {
         onEditPath={(pathId) => openEditModal("path", pathId)} // Trigger edit modal for path
       />
 
-      <EditModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        onSave={handleSaveEdit}
-        data={
-          editingItem
-            ? editingItem.type === 'marker'
-              ? markers.find((m) => m.id === editingItem.id) || null
-              : paths.find((p) => p.id === editingItem.id) || null
-            : null
-        }
-      />
+<EditModal
+  isOpen={isEditModalOpen}
+  onClose={() => setIsEditModalOpen(false)}
+  onSave={handleSaveEdit}
+  data={
+    editingItem
+      ? editingItem.type === 'marker'
+        ? {
+            id: markers.find((m) => m.id === editingItem.id)?.id || '',
+            name: markers.find((m) => m.id === editingItem.id)?.name || 'Unnamed Marker',
+            memory: markers.find((m) => m.id === editingItem.id)?.memory || '',
+            year: markers.find((m) => m.id === editingItem.id)?.year || new Date().getFullYear(),
+            classYear: markers.find((m) => m.id === editingItem.id)?.classYear || 'Freshman',
+            media: {
+              images: markers.find((m) => m.id === editingItem.id)?.media?.images || [],
+              videoUrl: markers.find((m) => m.id === editingItem.id)?.media?.videoUrl || null,
+              audioUrl: markers.find((m) => m.id === editingItem.id)?.media?.audioUrl || null,
+            },
+          }
+        : {
+            id: paths.find((p) => p.id === editingItem.id)?.id || '',
+            name: paths.find((p) => p.id === editingItem.id)?.name || 'Unnamed Path',
+            memory: paths.find((p) => p.id === editingItem.id)?.memory || '',
+            year: paths.find((p) => p.id === editingItem.id)?.year || new Date().getFullYear(),
+            classYear: paths.find((p) => p.id === editingItem.id)?.classYear || 'Freshman',
+            media: {
+              images: paths.find((p) => p.id === editingItem.id)?.media?.images || [],
+              videoUrl: paths.find((p) => p.id === editingItem.id)?.media?.videoUrl || null,
+              audioUrl: paths.find((p) => p.id === editingItem.id)?.media?.audioUrl || null,
+            },
+          }
+      : null
+  }
+/>
     </div>
   );
 }
