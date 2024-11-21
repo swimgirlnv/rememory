@@ -2,6 +2,7 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from 'firebase/firestore';
 import { setLogLevel } from 'firebase/firestore';
+import { getStorage } from "firebase/storage";
 
 setLogLevel('debug');
 
@@ -23,6 +24,7 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const storage = getStorage(app);
 
 
-export { db };
+export { db, storage };

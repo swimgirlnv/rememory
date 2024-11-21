@@ -1,18 +1,41 @@
 import React, { useState } from 'react';
 import TipTapEditor from './TipTapEditor';
+import uploadFile from './FirebaseUploader';
 
 const EditModal: React.FC<{
   isOpen: boolean;
   onClose: () => void;
-  onSave: (updatedData: { name: string; memory: string }) => void;
-  data: { id: string; name: string; memory: string } | null;
+  onSave: (updatedData: { name: string; memory: string; media: string[] }) => void;
+  data: { id: string; name: string; memory: string; media: string[] } | null;
 }> = ({ isOpen, onClose, onSave, data }) => {
-  const [name, setName] = useState(data?.name || '');
-  const [memory, setMemory] = useState(data?.memory || '');
+  const [name, setName] = useState(data?.name || "");
+  const [memory, setMemory] = useState(data?.memory || "");
+  const [media, setMedia] = useState<string[]>(data?.media || []);
+  const [isUploading, setIsUploading] = useState(false);
+  
+  const handleMediaUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) {
+      console.error("No files selected for upload.");
+      return;
+    }
+  
+    try {
+      const uploadedUrls = await Promise.all(
+        Array.from(files).map(async (file) => {
+          const existingUrl = media.find((url) => url.includes(file.name));
+          return existingUrl || (await uploadFile(file));
+        })
+      );
+      setMedia((prev) => [...new Set([...prev, ...uploadedUrls])]); // Avoid duplicates
+    } catch (error) {
+      console.error("Media upload failed:", error);
+    }
+  };
 
   const handleSave = () => {
-    onSave({ name, memory });
+    onSave({ name, memory, media });
   };
+
 
   if (!isOpen || !data) return null;
 
@@ -24,9 +47,24 @@ const EditModal: React.FC<{
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Name"
+          placeholder={data.name}
         />
-        <TipTapEditor initialContent={memory} onUpdate={setMemory} />
+        <TipTapEditor initialContent={data.memory} onUpdate={setMemory} />
+        <h3>Upload Media</h3>
+        <input
+          type="file"
+          accept="image/*,video/*,audio/*"
+          multiple
+          onChange={(e) => handleMediaUpload(e.target.files)}
+        />
+        {isUploading && <p>Uploading...</p>}
+        <div className="media-preview">
+          {media.map((url, index) => (
+            <div key={index} className="media-item">
+              <img src={url} alt={`media-${index}`} style={{ maxWidth: "100px" }} />
+            </div>
+          ))}
+        </div>
         <button onClick={handleSave}>Save</button>
         <button onClick={onClose}>Cancel</button>
       </div>
@@ -35,103 +73,3 @@ const EditModal: React.FC<{
 };
 
 export default EditModal;
-// // src/components/EditModal.tsx
-// import React, { useEffect } from 'react';
-// import TipTapEditor from './TipTapEditor';
-// import { MarkerData } from '../data/types';
-
-// interface EditModalProps {
-//   title: string;
-//   name: string;
-//   memory: string;
-//   classYear: '' | 'Freshman' | 'Sophomore' | 'Junior' | 'Senior';
-//   year: Date;
-//   onSave: (updatedMarker: MarkerData) => Promise<void>;
-//   onCancel: () => void;
-//   onNameChange: (newName: string) => void;
-//   onMemoryChange: (newMemory: string) => void;
-//   onYearChange: (newYear: 'Freshman' | 'Sophomore' | 'Junior' | 'Senior') => void;
-// }
-
-// const EditModal: React.FC<EditModalProps> = ({
-//   title,
-//   name,
-//   memory,
-//   year,
-//   classYear,
-//   onSave,
-//   onCancel,
-//   onNameChange,
-//   onMemoryChange,
-//   onYearChange,
-// }) => {
-//   useEffect(() => {
-//     onMemoryChange(memory); // Set initial memory value on load
-//   }, [memory, onMemoryChange]);
-
-//   return (
-//     <div className="modal-overlay" onClick={onCancel}>
-//       <div
-//         className="modal-content"
-//         onClick={(e) => e.stopPropagation()}
-//         style={{
-//           display: 'flex',
-//           flexDirection: 'column',
-//           justifyContent: 'center',
-//           alignItems: 'center',
-//           maxWidth: '600px',
-//           maxHeight: '80vh',
-//           overflow: 'auto',
-//         }}
-//       >
-//         <h2>{title}</h2>
-
-//         <div style={{ display: 'flex', flexDirection: 'column', width: '100%', overflowY: 'auto', padding: '10px' }}>
-//           <label style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-//             Name:
-//             <input
-//               type="text"
-//               value={name}
-//               onChange={(e) => onNameChange(e.target.value)}
-//               style={{ marginLeft: '10px', width: '100%' }}
-//             />
-//           </label>
-
-//           <label style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
-//             Memory:
-//             <div style={{ width: '100%' }}>
-//               <TipTapEditor
-//                 onUpdate={onMemoryChange}
-//                 initialContent={memory} // Set initial content here
-//               />
-//             </div>
-//           </label>
-
-//           <label style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
-//             Year:
-//             <select
-//               value={classYear}
-//               onChange={(e) => onYearChange(e.target.value as 'Freshman' | 'Sophomore' | 'Junior' | 'Senior')}
-//               style={{ marginLeft: '10px' }}
-//             >
-//               <option value="Freshman">Freshman</option>
-//               <option value="Sophomore">Sophomore</option>
-//               <option value="Junior">Junior</option>
-//               <option value="Senior">Senior</option>
-//             </select>
-//           </label>
-//         </div>
-
-//         <button onClick={() => onSave({
-//             id: '', name, memory, year: new Date(year),
-//             lat: 0,
-//             lng: 0,
-//             classYear: ''
-//         })}>Save</button>
-//         <button onClick={onCancel}>Cancel</button>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default EditModal;

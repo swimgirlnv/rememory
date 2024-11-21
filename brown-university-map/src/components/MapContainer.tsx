@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import InteractiveMap from "./InteractiveMap";
 import { locations } from "../data/locations";
 import { MarkerData, PathData } from "../data/types";
-import { collection, getDocs, addDoc, updateDoc, doc } from "firebase/firestore";
+import { collection, getDocs, addDoc, updateDoc, doc, deleteDoc, onSnapshot } from "firebase/firestore";
 import { db } from "../../firebaseConfig";
 import { v4 as uuidv4 } from "uuid";
 import EditModal from "./EditModal";
@@ -23,6 +23,38 @@ const MapContainer: React.FC<{
   const [editingItem, setEditingItem] = useState<{ type: 'marker' | 'path'; id: string } | null>(null);
 
   useEffect(() => {
+    const unsubscribeMarkers = onSnapshot(collection(db, "markers"), (snapshot) => {
+      const updatedMarkers = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        name: doc.data().name || "Unnamed Marker", // Provide default value
+        lat: doc.data().lat || 0, // Default to 0 if missing
+        lng: doc.data().lng || 0, // Default to 0 if missing
+        memory: doc.data().memory || "",
+        year: doc.data().year || "",
+        classYear: doc.data().classYear || "",
+      }));
+      setMarkers(updatedMarkers as MarkerData[]); // Cast to MarkerData[]
+    });
+  
+    const unsubscribePaths = onSnapshot(collection(db, "paths"), (snapshot) => {
+      const updatedPaths = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        name: doc.data().name || "Unnamed Path", // Provide default value
+        markers: doc.data().markers || [], // Default to empty array
+        memory: doc.data().memory || "",
+        year: doc.data().year || "",
+        classYear: doc.data().classYear || "",
+      }));
+      setPaths(updatedPaths as PathData[]); // Cast to PathData[]
+    });
+  
+    return () => {
+      unsubscribeMarkers();
+      unsubscribePaths();
+    };
+  }, []);
+  
+  useEffect(() => {
     const fetchMarkers = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, "markers"));
@@ -35,6 +67,8 @@ const MapContainer: React.FC<{
         console.error("Error fetching markers:", error);
       }
     };
+
+    
 
     const fetchPaths = async () => {
       try {
@@ -107,38 +141,82 @@ const MapContainer: React.FC<{
     setIsEditModalOpen(true);
   };
 
-  const handleSaveEdit = async (updatedData: { name: string; memory: string }) => {
-    if (editingItem) {
-      const { type, id } = editingItem;
+  const sanitizeData = (data: Record<string, any>) => {
+    return Object.fromEntries(
+      Object.entries(data).filter(([_, value]) => value !== undefined)
+    );
+  };
   
-      try {
-        if (type === 'marker') {
-          const markerIndex = markers.findIndex((m) => m.id === id);
-          if (markerIndex !== -1) {
-            const updatedMarker = { ...markers[markerIndex], ...updatedData };
-            await updateDoc(doc(db, 'markers', id), updatedMarker);
-            setMarkers((prev) =>
-              prev.map((m) => (m.id === id ? updatedMarker : m))
-            );
-          }
-        } else if (type === 'path') {
-          const pathIndex = paths.findIndex((p) => p.id === id);
-          if (pathIndex !== -1) {
-            const updatedPath = { ...paths[pathIndex], ...updatedData };
-            await updateDoc(doc(db, 'paths', id), updatedPath);
-            setPaths((prev) =>
-              prev.map((p) => (p.id === id ? updatedPath : p))
-            );
-          }
-        }
+  const handleSaveEdit = async (updatedData: { name: string; memory: string; media: string[] }) => {
+    if (!editingItem) return;
   
-        setIsEditModalOpen(false);
-        setEditingItem(null);
-      } catch (error) {
-        console.error('Error updating Firestore:', error);
-      }
+    const { type, id } = editingItem;
+    const sanitizedMedia = {
+      images: updatedData.media.filter((url) => /\.(jpeg|jpg|png|gif)$/i.test(url)),
+      videoUrl: updatedData.media.find((url) => /\.(mp4|mov)$/i.test(url)) || null,
+      audioUrl: updatedData.media.find((url) => /\.(mp3|wav)$/i.test(url)) || null,
+    };
+  
+    const sanitizedData =
+      type === "marker"
+        ? sanitizeData({ ...markers.find((m) => m.id === id), ...updatedData, media: sanitizedMedia })
+        : sanitizeData({ ...paths.find((p) => p.id === id), ...updatedData, media: sanitizedMedia });
+  
+    try {
+      const ref = doc(db, type === "marker" ? "markers" : "paths", id);
+      await updateDoc(ref, sanitizedData);
+      console.log(`${type} updated successfully.`);
+    } catch (error) {
+      console.error(`Error updating ${type}:`, error);
     }
   };
+
+  // Update Marker
+const updateMarker = async (markerId: string, updatedData: Partial<MarkerData>) => {
+  try {
+    const markerRef = doc(db, "markers", markerId);
+    await updateDoc(markerRef, updatedData);
+    console.log("Marker updated:", markerId);
+  } catch (error) {
+    console.error("Error updating marker:", error);
+  }
+};
+
+// Update Path
+const updatePath = async (pathId: string, updatedData: Partial<PathData>) => {
+  try {
+    const pathRef = doc(db, "paths", pathId);
+    await updateDoc(pathRef, updatedData);
+    console.log("Path updated:", pathId);
+  } catch (error) {
+    console.error("Error updating path:", error);
+  }
+};
+
+// Delete Marker
+const deleteMarker = async (markerId: string) => {
+  try {
+    const markerRef = doc(db, "markers", markerId);
+    await deleteDoc(markerRef);
+    console.log("Marker deleted from Firestore:", markerId);
+    // Update local state manually
+    setMarkers((prev) => prev.filter((m) => m.id !== markerId));
+  } catch (error) {
+    console.error("Error deleting marker:", error);
+  }
+};
+
+// Delete Path
+const deletePath = async (pathId: string) => {
+  try {
+    const pathRef = doc(db, "paths", pathId);
+    await deleteDoc(pathRef);
+    console.log("Path deleted:", pathId);
+    setPaths((prev) => prev.filter((p) => p.id !== pathId)); // Update local state
+  } catch (error) {
+    console.error("Error deleting path:", error);
+  }
+};
 
   return (
     <div>
@@ -203,16 +281,12 @@ const MapContainer: React.FC<{
         paths={paths}
         selectedMarkers={selectedMarkers}
         setSelectedMarkers={setSelectedMarkers}
-        onAddMarker={handleAddMarker}
-        onDeleteMarker={(markerId) =>
-          setMarkers((prev) => prev.filter((marker) => marker.id !== markerId))
-        }
-        onAddPath={(newPath) => setPaths((prev) => [...prev, newPath])}
-        onDeletePath={(pathId) =>
-          setPaths((prev) => prev.filter((path) => path.id !== pathId))
-        }
-        onEditPath={(pathId) => openEditModal('path', pathId)} // Open modal for path
-        onEditMarker={(markerId) => openEditModal('marker', markerId)} // Open modal for marker
+        onAddMarker={handleAddMarker} // Existing
+        onDeleteMarker={deleteMarker}
+        onAddPath={(newPath) => setPaths((prev) => [...prev, newPath])} // Existing
+        onDeletePath={deletePath}
+        onEditMarker={(markerId) => openEditModal("marker", markerId)} // Trigger edit modal for marker
+        onEditPath={(pathId) => openEditModal("path", pathId)} // Trigger edit modal for path
       />
 
       <EditModal

@@ -4,6 +4,7 @@ import { LatLngExpression } from "leaflet";
 import { MarkerData, PathData } from "../data/types";
 import { v4 as uuidv4 } from "uuid";
 import L from "leaflet";
+import ViewDetailsModal from "./ViewDetails";
 
 const InteractiveMap: React.FC<{
   isEditingMode: boolean;
@@ -34,7 +35,22 @@ const InteractiveMap: React.FC<{
 }) => {
   const [selectedPathId, setSelectedPathId] = useState<string | null>(null);
 
+  const [selectedDetails, setSelectedDetails] = useState<{
+    type: "marker" | "path";
+    data: {
+      name: string;
+      memory: string;
+      year: string | number;
+      classYear: string;
+      media?: string[];
+      connectedMarkers?: string[];
+    };
+  } | null>(null);
+
+  const closeModal = () => setSelectedDetails(null);
+
   console.log(onAddPath);
+  
   const MapClickHandler = () => {
     useMapEvents({
       click(e) {
@@ -62,6 +78,7 @@ const InteractiveMap: React.FC<{
   });
 
   return (
+    <>
     <MapContainer center={[41.8268, -71.4025]} zoom={15} style={{ height: "100vh", width: "100%" }}>
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
       <MapClickHandler />
@@ -71,10 +88,26 @@ const InteractiveMap: React.FC<{
         <Marker key={marker.id} icon={wandIcon} position={[marker.lat, marker.lng]}>
           <Popup>
             <p>{marker.name}</p>
+            {!isEditingMode && (
+                <button
+                  onClick={() => setSelectedDetails({
+                    type: "marker",
+                    data: {
+                      name: marker.name,
+                      memory: marker.memory,
+                      year: marker.year,
+                      classYear: marker.classYear,
+                      media: marker.media || [],
+                    },
+                  })}
+                >
+                  Read More
+                </button>
+              )}
             {isEditingMode && (
               <>
-                <button onClick={() => onDeleteMarker(marker.id)}>Delete</button>
-                <button onClick={() => onEditMarker(marker.id)}>Edit</button>
+                <button onClick={(e) => { e.stopPropagation(); onDeleteMarker(marker.id);}}>Delete</button>
+                <button onClick={(e) => { e.stopPropagation(); onEditMarker(marker.id); }}>Edit</button>
                 {isPathEditMode && (
                   <button
                     onClick={() =>
@@ -151,6 +184,13 @@ const InteractiveMap: React.FC<{
         </Popup>
       )}
     </MapContainer>
+
+    <ViewDetailsModal
+    isOpen={!!selectedDetails}
+    onClose={closeModal}
+    data={selectedDetails?.data || null}
+    />
+    </>
   );
 };
 
