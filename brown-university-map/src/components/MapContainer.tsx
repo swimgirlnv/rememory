@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from "react";
 import InteractiveMap from "./InteractiveMap";
 import ControlPanel from "./ControlPanel"; // Import Control Panel
@@ -7,6 +8,7 @@ import { db } from "../../firebaseConfig";
 import { v4 as uuidv4 } from "uuid";
 import EditModal from "./EditModal";
 import AboutModal from "./AboutModal";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 const MapContainer: React.FC = () => {
   const [isEditingMode, setIsEditingMode] = useState(false);
@@ -20,7 +22,21 @@ const MapContainer: React.FC = () => {
   const [editingItem, setEditingItem] = useState<{ type: "marker" | "path"; id: string } | null>(null);
   const [viewMode] = useState<"markers" | "paths" | "both">("both");
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
   
+  // Monitor authenticated user
+  useEffect(() => {
+    const auth = getAuth();
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setCurrentUser(user);
+      } else {
+        setCurrentUser(null);
+      }
+    });
+  }, []);
+
   // Fetch and listen for marker and path updates
   useEffect(() => {
     const unsubscribeMarkers = onSnapshot(collection(db, "markers"), (snapshot) => {
@@ -61,6 +77,24 @@ const MapContainer: React.FC = () => {
     setFilteredPaths(paths);
   }, [markers, paths]);
 
+  const adminUsers = [
+    { uid: "user-unique-id", email: "beccaqwaterson@gmail.com" },
+    { uid: "owM9kxvXLLadr4lR0KkgifJRJda2", email: "j.r.locke20@gmail.com" },
+  ];
+  // Helper: Check if a user is an admin
+  const isAdmin = adminUsers.some(
+    (admin) => admin.uid === currentUser?.uid && admin.email === currentUser?.email
+  );
+
+  // Helper: Check if the current user owns an item
+  const canEdit = (item: { createdBy: string }) => {
+    const isCreatedByCurrentUser = item.createdBy === currentUser?.uid;
+    console.log("Admin check:", isAdmin);
+    console.log("Created by current user:", isCreatedByCurrentUser);
+    return isAdmin || isCreatedByCurrentUser;
+  };
+
+
   // Toggle Editing Mode
   const toggleEditingMode = () => {
     setIsEditingMode((prev) => !prev);
@@ -76,23 +110,54 @@ const MapContainer: React.FC = () => {
   };
 
   // Create Path
+  // const handleCreatePath = async () => {
+  //   if (selectedMarkers.length < 2) {
+  //     alert("Please select at least two markers to create a path.");
+  //     return;
+  //   }
+
+  //   const newPath: PathData = {
+  //     id: uuidv4(),
+  //     markers: selectedMarkers,
+  //     name: `Path with ${selectedMarkers.length} Markers`,
+  //     memory: "",
+  //     year: new Date().getFullYear(),
+  //     classYear: "",
+  //     media: [],
+  //     createdBy: currentUser?.uid,
+  //   };
+
+  //   try {
+  //     const docRef = await addDoc(collection(db, "paths"), newPath);
+  //     setPaths((prev) => [...prev, { ...newPath, id: docRef.id }]);
+  //     setSelectedMarkers([]); // Clear selected markers after path creation
+  //   } catch (error) {
+  //     console.error("Error creating path:", error);
+  //   }
+  // };
   const handleCreatePath = async () => {
     if (selectedMarkers.length < 2) {
       alert("Please select at least two markers to create a path.");
       return;
     }
-
-    const newPath: PathData = {
-      id: uuidv4(),
-      markers: selectedMarkers,
-      name: `Path with ${selectedMarkers.length} Markers`,
-      memory: "",
-      year: new Date().getFullYear(),
-      classYear: "",
-      media: [],
-    };
-
+  
     try {
+      if (!currentUser) {
+        console.error("User is not logged in!");
+        return;
+      }
+  
+      const newPath: PathData = {
+        id: uuidv4(),
+        markers: selectedMarkers,
+        name: `Path with ${selectedMarkers.length} Markers`,
+        memory: "",
+        year: new Date().getFullYear(),
+        classYear: "",
+        media: [],
+        createdBy: currentUser.uid, // Save the current user's UID
+      };
+  
       const docRef = await addDoc(collection(db, "paths"), newPath);
       setPaths((prev) => [...prev, { ...newPath, id: docRef.id }]);
       setSelectedMarkers([]); // Clear selected markers after path creation
@@ -102,9 +167,25 @@ const MapContainer: React.FC = () => {
   };
 
   // Add Marker
+  // const handleAddMarker = async (newMarker: MarkerData) => {
+  //   try {
+  //     const docRef = await addDoc(collection(db, "markers"), newMarker);
+  //     setMarkers((prev) => [...prev, { ...newMarker, id: docRef.id }]);
+  //   } catch (error) {
+  //     console.error("Error adding marker:", error);
+  //   }
+  // };
   const handleAddMarker = async (newMarker: MarkerData) => {
     try {
-      const docRef = await addDoc(collection(db, "markers"), newMarker);
+      if (!currentUser) {
+        console.error("User is not logged in!");
+        return;
+      }
+  
+      const docRef = await addDoc(collection(db, "markers"), {
+        ...newMarker,
+        createdBy: currentUser.uid, // Save the current user's UID
+      });
       setMarkers((prev) => [...prev, { ...newMarker, id: docRef.id }]);
     } catch (error) {
       console.error("Error adding marker:", error);
@@ -112,7 +193,23 @@ const MapContainer: React.FC = () => {
   };
 
   // Delete Marker
+  // const deleteMarker = async (markerId: string) => {
+  //   try {
+  //     const markerRef = doc(db, "markers", markerId);
+  //     await deleteDoc(markerRef);
+  //     setMarkers((prev) => prev.filter((m) => m.id !== markerId));
+  //   } catch (error) {
+  //     console.error("Error deleting marker:", error);
+  //   }
+  // };
+
   const deleteMarker = async (markerId: string) => {
+    const marker = markers.find((m) => m.id === markerId);
+    if (!marker || !canEdit(marker)) {
+      alert("You are not authorized to delete this marker.");
+      return;
+    }
+  
     try {
       const markerRef = doc(db, "markers", markerId);
       await deleteDoc(markerRef);
@@ -123,7 +220,22 @@ const MapContainer: React.FC = () => {
   };
 
   // Delete Path
+  // const deletePath = async (pathId: string) => {
+  //   try {
+  //     const pathRef = doc(db, "paths", pathId);
+  //     await deleteDoc(pathRef);
+  //     setPaths((prev) => prev.filter((p) => p.id !== pathId));
+  //   } catch (error) {
+  //     console.error("Error deleting path:", error);
+  //   }
+  // };
   const deletePath = async (pathId: string) => {
+    const path = paths.find((p) => p.id === pathId);
+    if (!path || !canEdit(path)) {
+      alert("You are not authorized to delete this path.");
+      return;
+    }
+  
     try {
       const pathRef = doc(db, "paths", pathId);
       await deleteDoc(pathRef);
@@ -134,9 +246,22 @@ const MapContainer: React.FC = () => {
   };
 
   // Open Edit Modal
+  // const openEditModal = (type: "marker" | "path", id: string) => {
+  //   setEditingItem({ type, id });
+  //   setIsEditModalOpen(true);
+  // };
   const openEditModal = (type: "marker" | "path", id: string) => {
-    setEditingItem({ type, id });
-    setIsEditModalOpen(true);
+    const item =
+      type === "marker"
+        ? markers.find((m) => m.id === id)
+        : paths.find((p) => p.id === id);
+  
+    if (item && canEdit(item)) {
+      setEditingItem({ type, id });
+      setIsEditModalOpen(true);
+    } else {
+      alert("You do not have permission to edit this item.");
+    }
   };
 
   // Save Edits

@@ -63,6 +63,7 @@ const InteractiveMap: React.FC<{
             year: new Date().getFullYear(),
             classYear: "",
             media: [],
+            createdBy: uuidv4(),
           });
         }
       },

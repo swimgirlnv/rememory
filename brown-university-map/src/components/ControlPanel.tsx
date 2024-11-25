@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { MarkerData } from "../data/types";
+import { useAuth } from "./AuthContext";
+
 
 const ControlPanel: React.FC<{
   isEditingMode: boolean;
@@ -24,6 +26,8 @@ const ControlPanel: React.FC<{
 }) => {
   const [classYear, setClassYear] = useState<string | undefined>();
   const [year, setYear] = useState<number | undefined>();
+  const { currentUser, isAdmin, login, logout } = useAuth();
+
 
   const handleFilter = () => {
     onFilter({ classYear, year });
@@ -48,6 +52,17 @@ const ControlPanel: React.FC<{
   return (
     <div className="control-panel">
       <h3>Control Panel</h3>
+
+      {currentUser ? (
+        <div>
+          <p>Welcome, {currentUser.email}</p>
+          <button onClick={logout}>Logout</button>
+        </div>
+      ) : (
+        <button onClick={login}>Login</button>
+      )}
+
+      {isAdmin && <p>You are an admin!</p>}
 
       {isEditingMode ? (
         <>
