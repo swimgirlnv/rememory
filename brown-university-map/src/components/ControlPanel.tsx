@@ -51,8 +51,6 @@ const ControlPanel: React.FC<{
 
   return (
     <div className="control-panel">
-      <h3>Control Panel</h3>
-
       {currentUser ? (
         <div>
           <p>Welcome, {currentUser.email}</p>
@@ -61,9 +59,8 @@ const ControlPanel: React.FC<{
       ) : (
         <button onClick={login}>Login</button>
       )}
-
       {isAdmin && <p>You are an admin!</p>}
-
+      <button onClick={onAboutOpen}>About</button>
       {isEditingMode ? (
         <>
           {!isPathEditMode ? (
@@ -123,8 +120,6 @@ const ControlPanel: React.FC<{
           </div>
         </>
       )}
-
-      <button onClick={onAboutOpen}>About</button>
     </div>
   );
 };

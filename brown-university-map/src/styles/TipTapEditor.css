@@ -30,38 +30,7 @@
     margin-bottom: 1em;
     color: #333;
   }
-  
-  /* Button Styling */
-  button {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    margin: 5px;
-  }
-  
-  button:focus {
-    outline: none;
-  }
-  
-  button:hover {
-    opacity: 0.9;
-  }
-  
-  button:active {
-    transform: scale(0.98);
-  }
-  
-  button.save {
-    background-color: #4CAF50;
-    color: white;
-  }
-  
-  button.cancel {
-    background-color: #f44336;
-    color: white;
-  }
-  
+
   /* RichTextEditor Styling */
   .rich-text-editor {
     border: 1px solid #ddd;
@@ -82,18 +51,19 @@
   .rich-text-editor .toolbar button {
     padding: 5px 10px;
     background-color: #f1f1f1;
+    color: #333;
     border: 1px solid #ccc;
     border-radius: 4px;
     cursor: pointer;
   }
   
   .rich-text-editor .toolbar button.active {
-    background-color: #ddd;
+    background-color: #d3b47b;
     color: #333;
   }
   
   .rich-text-editor .toolbar button:hover {
-    background-color: #e0e0e0;
+    background-color: #d3b47b;
   }
   
   /* Input Fields */

@@ -1,43 +1,5 @@
 /* ReadMoreModal.css */
 
-
-/* .modal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  max-width: 600px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
-}
-
-.modal-content {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.media-preview img {
-  border-radius: 4px;
-  margin: 5px;
-}
-
-.video-preview,
-.audio-preview {
-  margin-top: 10px;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-} */
-
-
-
 .modal-overlay {
     position: fixed;
     top: 0;

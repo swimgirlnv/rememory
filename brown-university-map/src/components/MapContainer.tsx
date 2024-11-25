@@ -9,8 +9,20 @@ import { v4 as uuidv4 } from "uuid";
 import EditModal from "./EditModal";
 import AboutModal from "./AboutModal";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
+import RightPanel from "./RightPanel";
+import ViewDetailsModal from "./ViewDetails";
 
 const MapContainer: React.FC = () => {
+  const [selectedDetails, setSelectedDetails] = useState<{
+    type: "marker" | "path";
+    data: {
+      name: string;
+      memory: string;
+      year: number;
+      classYear: string;
+      media: { url: string; type: "image" | "video" | "audio" }[];
+    };
+  } | null>(null);
   const [isEditingMode, setIsEditingMode] = useState(false);
   const [isPathEditMode, setIsPathEditMode] = useState(false);
   const [markers, setMarkers] = useState<MarkerData[]>([]);
@@ -23,7 +35,7 @@ const MapContainer: React.FC = () => {
   const [viewMode] = useState<"markers" | "paths" | "both">("both");
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
-
+  console.log(selectedDetails);
   
   // Monitor authenticated user
   useEffect(() => {
@@ -200,10 +212,10 @@ const MapContainer: React.FC = () => {
 
   // Open Edit Modal
   const openEditModal = (type: "marker" | "path", id: string) => {
-    if (!currentUser) {
-      alert("You must be logged in to edit.");
-      return;
-    }
+if (!currentUser) {
+    alert("You must be logged in to edit.");
+    return;
+  }
 
     const item =
       type === "marker"
@@ -313,6 +325,17 @@ const MapContainer: React.FC = () => {
           onEditPath={(pathId) => openEditModal("path", pathId)}
           currentUser={currentUser}
         />
+        {/* Right-side list panel */}
+        <RightPanel
+          markers={markers}
+          paths={paths}
+          onMarkerClick={(markerData) =>
+            setSelectedDetails({ type: "marker", data: markerData })
+          }
+          onPathClick={(pathData) =>
+            setSelectedDetails({ type: "path", data: pathData })
+          }
+        />
       </div>
       <EditModal
         key={editingItem?.id}
@@ -345,6 +368,32 @@ const MapContainer: React.FC = () => {
         isOpen={isAboutModalOpen}
         onClose={() => setIsAboutModalOpen(false)}
       />
+      {selectedDetails && (
+  <ViewDetailsModal
+    isOpen={!!selectedDetails}
+    onClose={() => setSelectedDetails(null)}
+    data={
+      selectedDetails?.data
+        ? {
+            ...selectedDetails.data,
+            media: {
+              images: Array.isArray(selectedDetails.data.media)
+                ? selectedDetails.data.media
+                    .filter((item) => item.type === "image")
+                    .map((item) => item.url)
+                : [], // Default to empty array if media is not an array
+              videoUrl: Array.isArray(selectedDetails.data.media)
+                ? selectedDetails.data.media.find((item) => item.type === "video")?.url || null
+                : null, // Fallback to null if not found
+              audioUrl: Array.isArray(selectedDetails.data.media)
+                ? selectedDetails.data.media.find((item) => item.type === "audio")?.url || null
+                : null, // Fallback to null if not found
+            },
+          }
+        : null
+    }
+  />
+)}
     </div>
   );
 };
