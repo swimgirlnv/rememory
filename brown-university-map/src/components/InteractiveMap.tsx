@@ -73,13 +73,59 @@ const InteractiveMap: React.FC<{
     return null;
   };
 
-  const wandIcon = L.icon({
-    iconUrl:
-      "https://images.ctfassets.net/3prze68gbwl1/assetglossary-17su9wok1ui0z7w/c4c4bdcdf0d0f86447d3efc450d1d081/map-marker.png",
-    iconSize: [30, 30],
-    iconAnchor: [25, 25],
-    popupAnchor: [-10, 0],
-  });
+  // const wandIcon = L.icon({
+  //   iconUrl:
+  //     "https://images.ctfassets.net/3prze68gbwl1/assetglossary-17su9wok1ui0z7w/c4c4bdcdf0d0f86447d3efc450d1d081/map-marker.png",
+  //   iconSize: [18, 18],
+  //   iconAnchor: [10, 10],
+  //   popupAnchor: [0, 0],
+  // });
+
+  const getMarkerIcon = (classYear: string): L.Icon => {
+    const gradientMap: { [key: string]: { start: string; end: string } } = {
+      Freshman: { start: "#8b4513", end: "#5c4033" }, // Darker Sienna to DarkBrown
+      Sophomore: { start: "#b5651d", end: "#8b4513" }, // Darker Peru to SaddleBrown
+      Junior: { start: "#b37a4c", end: "#8b5a2b" }, // Darker BurlyWood to SaddleBrown
+      Senior: { start: "#a07850", end: "#8b5a2b" }, // Darker Tan to Peru
+      Alumni: { start: "#d2691e", end: "#8b4513" }, // Darker SandyBrown to SaddleBrown
+      "Grad Year 1": { start: "#b8860b", end: "#5c4033" }, // Darker GoldenRod to DarkBrown
+      "Grad Year 2": { start: "#cc7a6a", end: "#8b4513" }, // Darker DarkSalmon to SaddleBrown
+      "Grad Year 3": { start: "#a37575", end: "#8b4513" }, // Darker RosyBrown to SaddleBrown
+      "Grad Year 4": { start: "#8b4513", end: "#3c2f2f" }, // SaddleBrown to VeryDarkBrown
+      "Grad Year 5": { start: "#5c4033", end: "#2c1f1f" }, // DarkBrown to VeryVeryDarkBrown
+      Default: { start: "#8b4513", end: "#5c4033" }, // Default: Darker Sienna to DarkBrown
+    };
+  
+    const gradient = gradientMap[classYear] || gradientMap.Default;
+  
+    // Define an SVG for a pin shape with gradient
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="48" viewBox="0 0 32 48">
+        <defs>
+          <linearGradient id="grad1" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:${gradient.start};stop-opacity:1" />
+            <stop offset="100%" style="stop-color:${gradient.end};stop-opacity:1" />
+          </linearGradient>
+        </defs>
+        <path 
+          d="M16 0 C24.837 0 32 7.163 32 16 C32 26 16 48 16 48 C16 48 0 26 0 16 C0 7.163 7.163 0 16 0 Z" 
+          fill="url(#grad1)" 
+        />
+        <circle cx="16" cy="16" r="8" fill="white" />
+      </svg>
+    `;
+  
+  
+    // Encode the SVG as a data URI
+    const iconUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  
+    return L.icon({
+      iconUrl,
+      iconSize: [18, 18], // Adjust the size for better visibility
+      iconAnchor: [9, 9], // Anchor the icon at the bottom
+      popupAnchor: [0, 0], // Position the popup above the icon
+    });
+  };
 
 
   const getPopupPosition = (path: PathData): LatLngExpression | undefined => {
@@ -96,7 +142,7 @@ const InteractiveMap: React.FC<{
 
         {/* Render existing markers */}
         {markers.map((marker) => (
-          <Marker key={marker.id} icon={wandIcon} position={[marker.lat, marker.lng]}>
+          <Marker key={marker.id} icon={getMarkerIcon(marker.classYear)} position={[marker.lat, marker.lng]}>
             <Popup>
               <p>{marker.name}</p>
               {!isEditingMode && (
@@ -169,7 +215,8 @@ const InteractiveMap: React.FC<{
             <Polyline
               key={path.id}
               positions={positions}
-              color="blue"
+              color="#8B4513" // Beautiful SaddleBrown
+              weight={4}
               eventHandlers={{
                 click: () => {
                   if (isPathEditMode) {

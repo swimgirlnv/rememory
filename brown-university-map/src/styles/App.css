@@ -34,7 +34,7 @@ body, html {
 
 /* Control Panel */
 .control-panel {
-  background: #fff;
+  background: #c49d7b;
   padding: 10px;
   border-radius: 12px 0 0 12px; /* Rounded edges on the left */
   box-shadow: 4px 0 15px rgba(0, 0, 0, 0.15);
@@ -80,7 +80,7 @@ body, html {
   padding: 10px 20px;
   font-size: .8em;
   color: #fff;
-  background: #007bff;
+  background: #b5651d;
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -89,7 +89,7 @@ body, html {
 }
 
 .control-panel button:hover {
-  background: #0056b3;
+  background: #5C4033;
 }
 
 .control-panel button:disabled {
