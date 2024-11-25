@@ -28,6 +28,14 @@ const ControlPanel: React.FC<{
   const [year, setYear] = useState<number | undefined>();
   const { currentUser, isAdmin, login, logout } = useAuth();
 
+  const parseFirstNameFromEmail = (email: string) => {
+    if (!email) return "User";
+    const firstPart = email.split("@")[0];
+    const nameParts = firstPart.split(/[._]/); // Split by dot or underscore
+    return nameParts
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()) // Capitalize each part
+      .join(" ");
+  };
 
   const handleFilter = () => {
     onFilter({ classYear, year });
@@ -52,8 +60,8 @@ const ControlPanel: React.FC<{
   return (
     <div className="control-panel">
       {currentUser ? (
-        <div>
-          <p>Welcome, {currentUser.email}</p>
+        <div style={{ maxWidth: "160px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
+          <p>Welcome, {parseFirstNameFromEmail(currentUser.email)}</p>
           <button onClick={logout}>Logout</button>
         </div>
       ) : (
