@@ -62,10 +62,10 @@ const ControlPanel: React.FC<{
       {currentUser ? (
         <div style={{ maxWidth: "160px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
           <p>Welcome, {parseFirstNameFromEmail(currentUser.email)}</p>
-          <button onClick={logout}>Logout</button>
+          <button onClick={logout} className="logout">Logout</button>
         </div>
       ) : (
-        <button onClick={login}>Login</button>
+        <button onClick={login} className="enter">Login</button>
       )}
       {isAdmin && <p>You are an admin!</p>}
       <button onClick={onAboutOpen}>About</button>
@@ -74,13 +74,13 @@ const ControlPanel: React.FC<{
           {!isPathEditMode ? (
             <>
               {/* Editing Mode Active, Path Editing Disabled */}
-              <button onClick={onEditModeToggle}>Disable Edit Mode</button>
-              <button onClick={onPathEditModeToggle}>Enable Path Editing Mode</button>
+              <button onClick={onEditModeToggle} className='exit'>Disable Edit Mode</button>
+              <button onClick={onPathEditModeToggle} className='enter'>Enable Path Editing Mode</button>
             </>
           ) : (
             <>
               {/* Path Editing Mode Active */}
-              <button onClick={onPathEditModeToggle}>Disable Path Editing Mode</button>
+              <button onClick={onPathEditModeToggle} className='exit'>Disable Path Editing Mode</button>
               <div>
                 <h4>Selected Markers for Path</h4>
                 <ul>
@@ -96,13 +96,12 @@ const ControlPanel: React.FC<{
       ) : (
         <>
           {/* View Mode */}
-          <button onClick={onEditModeToggle}>Enter Edit Mode</button>
+          <button onClick={onEditModeToggle} className="enter">Enter Edit Mode</button>
 
           {/* Filter Section */}
           <div>
-            <h4>Filter</h4>
             <label>
-              Class Year:
+              <p>Class Year:</p>
               <select
                 value={classYear || ""}
                 onChange={(e) => setClassYear(e.target.value || undefined)}
@@ -116,7 +115,7 @@ const ControlPanel: React.FC<{
               </select>
             </label>
             <label>
-              Year:
+              <p>Year:</p>
               <input
                 type="number"
                 placeholder="e.g., 2023"

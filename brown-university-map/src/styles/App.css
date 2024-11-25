@@ -18,7 +18,6 @@
 .control-panel {
   background: #C49D7B; /* Muted brown */
   padding: 15px;
-  box-shadow: 4px 4px 15px rgba(0, 0, 0, 0.2);
   width: 240px; /* Slightly wider for better usability */
   height: 100%; /* Full height */
   overflow-y: auto;
@@ -30,13 +29,13 @@
 .control-panel h3 {
   font-size: 1.2em;
   margin-bottom: 20px;
-  color: #4B2E22;
+  color: #C49D7B;
 }
 
 .control-panel select,
 .control-panel input {
   background: #FAF3EF;
-  border: 1px solid #8B4513;
+  border: 1px solid rgb(217, 180, 83);
   border-radius: 8px;
   color: #4B2E22;
   width: 90%;
@@ -44,9 +43,8 @@
 }
 
 .control-panel button {
-  background: #8B4513;
-  border: none;
-  color: #FFF;
+  background: rgb(217, 180, 83);
+  color: rgb(79, 49, 30);
   transition: background 0.3s ease;
   padding: 10px;
   border-radius: 8px;
@@ -55,7 +53,7 @@
 }
 
 .control-panel button:hover {
-  background: #5C4033;
+  background: rgb(179, 141, 46);
 }
 
 /* Map Container */
@@ -64,17 +62,14 @@
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
   height: 100%;
   width: 100%;
-  border-left: 2px solid #8B4513; /* Adds a subtle divider */
-  border-right: 2px solid #8B4513;
 }
 
 /* Footer Styling */
 .footer {
-  background: #C49D7B; /* Muted brown */
+  background-color:rgb(79, 49, 30); /* Muted brown */
   text-align: center;
   padding: 10px;
   color: #4B2E22;
-  border-top: 2px solid #8B4513; /* Divider at the top of the footer */
 }
 
 /* Modal Styles */
@@ -116,7 +111,7 @@
 h2,
 h3,
 h4 {
-  color: #4B2E22;
+  color: #C49D7B;
 }
 
 input,
@@ -140,9 +135,9 @@ select {
   width: 160px; /* Fixed width for the control panel */
   height: 100%;
   overflow-y: auto; /* Enable vertical scrolling if content overflows */
-  background-color: #C49D7B; /* Muted brown background */
+  background-color: rgb(79, 49, 30); /* Muted brown background */
+  color: #C49D7B;
   padding: 15px;
-  box-shadow: 4px 0 15px rgba(0, 0, 0, 0.2); /* Subtle shadow */
   display: flex;
   /* justify-content: center; */
   align-items: center;
@@ -159,8 +154,8 @@ select {
 footer {
   text-align: center;
   padding: 10px 0;
-  background: #C49D7B; /* Same muted brown */
-  color: #4B2E22;
+  background: rgb(79, 49, 30); /* Same muted brown */
+  color: #C49D7B;
   /* border-top: 2px solid #8B4513; */
   font-size: 0.9rem;
   box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
@@ -170,19 +165,19 @@ footer {
   flex-shrink: 0; /* Prevent resizing */
   width: 240px; /* Fixed width */
   height: 100%; /* Full height */
-  background: #C49D7B; /* Muted brown */
+  background:rgb(79, 49, 30);
   padding: 15px;
   box-shadow: -4px 0 15px rgba(0, 0, 0, 0.2); /* Subtle shadow */
   overflow-y: auto; /* Enable scrolling for long lists */
 }
 
 .right-panel h3 {
-  color: #4B2E22; /* Dark brown */
+  color:  #C49D7B; /* Dark brown */
   margin-bottom: 15px;
 }
 
 .right-panel h4 {
-  color: #5C4033; /* Slightly lighter brown */
+  color:  rgb(217, 180, 83); /* Slightly lighter brown */
   margin-bottom: 10px;
 }
 
@@ -195,7 +190,7 @@ footer {
   padding: 8px 10px;
   margin-bottom: 5px;
   background: #FAF3EF; /* Light beige */
-  border: 1px solid #8B4513; /* Brown border */
+  border: 1px solid rgb(217, 180, 83); /* Brown border */
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.2s ease, transform 0.2s ease;
@@ -204,4 +199,41 @@ footer {
 .right-panel li:hover {
   background: #E6D4C3; /* Slightly darker beige */
   transform: scale(1.02); /* Slight zoom effect */
+}
+
+/* Exit, Delete, Logout Buttons */
+button.exit, button.delete, button.logout {
+  background-color: rgb(196, 64, 75); /* Red shade */
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  font-size: .8rem;
+  transition: background-color 0.3s ease;
+}
+
+button.exit:hover,
+button.delete:hover,
+button.logout:hover {
+  background-color: rgb(160, 50, 60); /* Darker red on hover */
+}
+
+/* Enter, Save Buttons */
+button.enter, button.save {
+  background-color: rgb(89, 97, 91); /* Green shade */
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  font-size: .8rem;
+  transition: background-color 0.3s ease;
+}
+
+button.enter:hover,
+button.save:hover {
+  background-color: rgb(70, 80, 75); /* Darker green on hover */
 }

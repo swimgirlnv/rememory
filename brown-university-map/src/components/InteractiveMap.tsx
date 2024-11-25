@@ -170,6 +170,7 @@ const InteractiveMap: React.FC<{
                       e.stopPropagation();
                       onDeleteMarker(marker.id);
                     }}
+                    className="delete"
                   >
                     Delete
                   </button>
@@ -251,6 +252,7 @@ const InteractiveMap: React.FC<{
                 onDeletePath(selectedPathDetails.id);
                 setSelectedPathId(null);
               }}
+              className="delete"
             >
               Delete
             </button>

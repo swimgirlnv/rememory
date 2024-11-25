@@ -1,7 +1,8 @@
 @import 'leaflet/dist/leaflet.css';
 
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  /* font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif; */
+  font-family: 'Graduate', sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
@@ -41,16 +42,16 @@ h1 {
 }
 
 button {
+  background-color: rgb(217, 180, 83); /* SaddleBrown */
+  color: white;
+  border: none;
+  padding: 10px;
   border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: .8em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #8B4513; /* SaddleBrown */
-  color: #FFF; /* White text */
+  margin-bottom: 10px;
   cursor: pointer;
-  transition: background-color 0.25s, border-color 0.25s;
+  font-size: .8rem;
+  transition: background-color 0.3s ease;
+  font-family: 'Graduate', sans-serif;
 }
 
 button:hover {
@@ -73,4 +74,8 @@ button:focus-visible {
   button {
     background-color: #B5651D; /* Lighter orange-brown for light mode */
   }
+}
+
+p {
+  font-size: .8em;
 }

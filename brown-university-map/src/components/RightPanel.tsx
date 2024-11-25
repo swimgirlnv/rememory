@@ -37,6 +37,7 @@ const RightPanel: React.FC<{
                   media: marker.media || [],
                 })
               }
+              style={{ fontSize: '.8em'}}
             >
               {marker.name || "Unnamed Marker"}
             </li>

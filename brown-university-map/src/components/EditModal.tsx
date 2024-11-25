@@ -188,16 +188,16 @@ const EditModal: React.FC<{
                       <source src={item.url} />
                     </audio>
                   )}
-                  <button onClick={() => handleDeleteFile(item.url)}>Delete</button>
+                  <button onClick={() => handleDeleteFile(item.url)} className='delete'>Delete</button>
                 </div>
               ))}
             </div>
           )}
         </div>
-        <button className="button" onClick={handleSave}>
+        <button className="save" onClick={handleSave}>
           Save
         </button>
-        <button className="button" onClick={onClose}>
+        <button onClick={onClose}>
           Cancel
         </button>
       </div>
