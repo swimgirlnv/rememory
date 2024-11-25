@@ -1,6 +1,6 @@
 [
     {
-      "origin": "*",
+      "origin": "https://rememory-one.vercel.app",
       "method": ["GET", "POST", "PUT", "DELETE"],
       "responseHeader": ["Content-Type", "Authorization"],
       "maxAgeSeconds": 3600

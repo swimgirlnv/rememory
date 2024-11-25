@@ -2,6 +2,10 @@ import React, { useState, useEffect } from "react";
 import TipTapEditor from "./TipTapEditor";
 import uploadFile from "./FirebaseUploader";
 import { MediaItem } from "../data/types";
+import { getStorage, ref, deleteObject } from "firebase/storage";
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "../../firebaseConfig";
+
 
 const EditModal: React.FC<{
   isOpen: boolean;
@@ -79,6 +83,52 @@ const EditModal: React.FC<{
     }
   };
 
+
+  const handleDeleteFile = async (fileUrl: string) => {
+    if (!data?.id) {
+      console.error("Marker ID is not available.");
+      return;
+    }
+  
+    try {
+      const storage = getStorage();
+      const fileRef = ref(storage, fileUrl); // Reference the file
+      await deleteObject(fileRef); // Delete the file from storage
+  
+      console.log("File deleted successfully:", fileUrl);
+  
+      // Update marker's media list after deletion
+      const updatedMedia = media.filter((item) => item.url !== fileUrl);
+      setMedia(updatedMedia); // Update local state
+  
+      const markerDocRef = doc(db, "markers", data.id); // Reference Firestore document
+      await updateDoc(markerDocRef, { media: updatedMedia });
+  
+      console.log("Marker media updated in Firestore.");
+    } catch (error) {
+      console.error("Error deleting file:", error);
+      alert("Failed to delete file. Please try again.");
+    }
+  };
+
+  // const updateMarkerMedia = async (updatedMedia: MediaItem[]) => {
+  //   if (!data?.id) {
+  //     console.error("Marker ID is not available.");
+  //     return;
+  //   }
+  
+  //   try {
+  //     const markerDocRef = doc(db, "markers", data.id); // Reference Firestore document
+  //     await updateDoc(markerDocRef, { media: updatedMedia });
+  
+  //     console.log("Marker media updated successfully.");
+  //     setMedia(updatedMedia); // Update local state
+  //   } catch (error) {
+  //     console.error("Error updating marker media:", error);
+  //     alert("Failed to update marker. Please try again.");
+  //   }
+  // };
+
   const handleSave = () => {
     onSave({ name, memory, media, classYear, year });
     onClose();
@@ -138,6 +188,7 @@ const EditModal: React.FC<{
                       <source src={item.url} />
                     </audio>
                   )}
+                  <button onClick={() => handleDeleteFile(item.url)}>Delete</button>
                 </div>
               ))}
             </div>
