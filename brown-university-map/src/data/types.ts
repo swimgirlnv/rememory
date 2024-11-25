@@ -1,3 +1,8 @@
+export interface MediaItem {
+  url: string;
+  type: "image" | "video" | "audio";
+}
+
 export interface MarkerData {
   id: string;
   name: string;
@@ -6,11 +11,7 @@ export interface MarkerData {
   memory: string;
   year: number;
   classYear: string;
-  media?: {
-    images?: string[];
-    videoUrl?: string;
-    audioUrl?: string;
-  };
+  media?: MediaItem[]; // Unified media array
 }
 
 export interface PathData {
@@ -20,9 +21,5 @@ export interface PathData {
   memory: string;
   year: number;
   classYear: string;
-  media?: {
-    images?: string[];
-    videoUrl?: string;
-    audioUrl?: string;
-  };
+  media?: MediaItem[]; // Unified media array
 }

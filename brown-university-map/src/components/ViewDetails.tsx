@@ -12,7 +12,7 @@ const ViewDetailsModal: React.FC<{
   } | null;
 }> = ({ isOpen, onClose, data }) => {
   if (!isOpen || !data) return null;
-
+  console.log("Data received in ViewDetailsModal:", data); // Debug log
   const { name, memory, classYear, year, media } = data;
 
   return (
