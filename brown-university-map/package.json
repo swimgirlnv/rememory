@@ -21,7 +21,8 @@
     "react-dom": "^18.3.1",
     "react-leaflet": "^4.2.1",
     "react-markdown": "^9.0.1",
-    "uuid": "^11.0.3"
+    "uuid": "^11.0.3",
+    "yet-another-react-lightbox": "^3.21.7"
   },
   "devDependencies": {
     "@eslint/js": "^9.13.0",

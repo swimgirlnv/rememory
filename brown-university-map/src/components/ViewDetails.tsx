@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useState } from "react";
+import Lightbox from "yet-another-react-lightbox";
+import "yet-another-react-lightbox/styles.css";
 
 const ViewDetailsModal: React.FC<{
   isOpen: boolean;
@@ -11,47 +13,59 @@ const ViewDetailsModal: React.FC<{
     media: { images: string[]; videoUrl: string | null; audioUrl: string | null };
   } | null;
 }> = ({ isOpen, onClose, data }) => {
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0); // Index of the image to open in the lightbox
+
   if (!isOpen || !data) return null;
-  console.log("Data received in ViewDetailsModal:", data); // Debug log
+
   const { name, memory, classYear, year, media } = data;
+
+  console.log("Data passed to ViewDetailsModal:", data);
 
   return (
     <div className="modal-overlay">
       <div className="modal-content">
-        <h2>{name}</h2>
-        <p><strong>Class Year:</strong> {classYear}</p>
-        <p><strong>Year:</strong> {year}</p>
-        <div>
-          <strong>Memory:</strong>
-          <div dangerouslySetInnerHTML={{ __html: memory || '' }} />
+        <h2>{name || "No Name Available"}</h2>
+        <p>
+          <strong>{classYear || "N/A"}, {year || "N/A"}</strong>
+        </p>
+        <div style={{ textAlign: "left" }}>
+          <div dangerouslySetInnerHTML={{ __html: memory || "<p>No memory available.</p>" }} />
         </div>
         <div className="media-section">
-          <h3>Media</h3>
           {/* Render images */}
-          {media?.images?.length > 0 && (
+          {media.images?.length > 0 ? (
             <div className="image-gallery">
               {media.images.map((url, index) => (
                 <img
                   key={index}
                   src={url}
                   alt={`media-${index}`}
-                  style={{ maxWidth: '100px', margin: '5px' }}
+                  style={{ maxWidth: "100px", margin: "5px", cursor: "pointer" }}
+                  onClick={() => {
+                    setLightboxIndex(index);
+                    setLightboxOpen(true);
+                  }}
                 />
               ))}
             </div>
+          ) : (
+            <></>
           )}
           {/* Render video */}
-          {media?.videoUrl && (
+          {media.videoUrl ? (
             <div className="video-preview">
               <strong>Video:</strong>
-              <video controls style={{ maxWidth: '100%' }}>
+              <video controls style={{ maxWidth: "100%" }}>
                 <source src={media.videoUrl} type="video/mp4" />
                 Your browser does not support the video tag.
               </video>
             </div>
+          ) : (
+            <></>
           )}
           {/* Render audio */}
-          {media?.audioUrl && (
+          {media.audioUrl ? (
             <div className="audio-preview">
               <strong>Audio:</strong>
               <audio controls>
@@ -59,10 +73,22 @@ const ViewDetailsModal: React.FC<{
                 Your browser does not support the audio tag.
               </audio>
             </div>
+          ) : (
+            <></>
           )}
         </div>
         <button onClick={onClose}>Close</button>
       </div>
+
+      {/* Lightbox for enlarged images */}
+      {media.images?.length > 0 && (
+        <Lightbox
+          open={lightboxOpen}
+          close={() => setLightboxOpen(false)}
+          slides={media.images.map((url) => ({ src: url }))}
+          index={lightboxIndex}
+        />
+      )}
     </div>
   );
 };

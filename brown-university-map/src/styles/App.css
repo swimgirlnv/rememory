@@ -4,59 +4,225 @@
 #root {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem;
+  /* padding: .5rem; */
   text-align: center;
   display: flex;
   flex-direction: column;
-}
-
-.filters {
-  display: flex;
-  flex-direction: row;
   justify-content: center;
   align-items: center;
-  margin: 1rem 0;
+  height: 100%;
 }
 
-.controls {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  text-align: left;
+/* General Reset */
+body, html {
+  margin: 0;
+  padding: 1rem;
+  font-family: 'Roboto', Arial, sans-serif;
+  background-color: #f9f9f9;
+  color: #333;
+  height: 100%;
 }
 
-.filters label {
-  margin: 0 1rem;
+/* Map Container */
+.leaflet-container {
+  flex: 1; /* Take up all available space */
+  border-radius: 0 12px 12px 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  height: 98vh;
+  width: 85vw;
 }
 
-.body {
+/* Control Panel */
+.control-panel {
+  background: #fff;
+  padding: 10px;
+  border-radius: 12px 0 0 12px; /* Rounded edges on the left */
+  box-shadow: 4px 0 15px rgba(0, 0, 0, 0.15);
+  width: 150px;
+  height: 60vh;
+  position: relative;
+  top: 0;
+  left: 0;
+  overflow-y: auto; /* Scroll if content overflows */
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  width: 80vw;
-}
-
-.control-panel {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  background: white;
-  padding: 20px;
-  border-radius: 5px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
-  max-width: 300px;
+  align-items: center;
 }
 
 .control-panel h3 {
+  font-size: 1.2em;
+  margin-bottom: 20px;
+  color: #444;
+}
+
+.control-panel h4 {
+  font-size: 1em;
   margin-bottom: 10px;
 }
 
-.control-panel input,
-.control-panel select,
-.control-panel button {
-  width: 100%;
+.control-panel label {
+  display: block;
   margin-bottom: 10px;
-  padding: 5px;
+}
+
+.control-panel select,
+.control-panel input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-top: 5px;
+  font-size: 1em;
+  background: #f7f7f7;
+}
+
+.control-panel button {
+  padding: 10px 20px;
+  font-size: .8em;
+  color: #fff;
+  background: #007bff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  margin-bottom: 10px;
+}
+
+.control-panel button:hover {
+  background: #0056b3;
+}
+
+.control-panel button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* Selected Markers List */
+.control-panel ul {
+  padding-left: 20px;
+}
+
+.control-panel li {
+  font-size: 0.8em;
+  color: #555;
+  list-style: square;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 2000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  width: 90vw;
+  height: 80vh;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.modal-content h2 {
+  margin-top: 0;
+  color: #007bff;
+}
+
+.modal-content label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 1em;
+  color: #333;
+}
+
+.modal-content input,
+.modal-content select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-top: 5px;
+  font-size: 1em;
+}
+
+.modal-content button {
+  padding: 10px 20px;
+  font-size: 1em;
+  color: #fff;
+  background: #007bff;
+  border: none;
+  border-radius: 8px;
+  margin-right: 10px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.modal-content button:hover {
+  background: #0056b3;
+}
+
+/* Media Preview */
+.media-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.media-preview img,
+.media-preview video {
+  max-width: 80px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+.media-preview audio {
+  margin-top: 10px;
+}
+
+/* Hover Effects for Markers */
+.leaflet-marker-icon {
+  transition: transform 0.2s ease;
+}
+
+.leaflet-marker-icon:hover {
+  transform: scale(1.1);
+}
+
+/* Path Styling */
+.leaflet-interactive {
+  stroke-width: 4px !important;
+}
+
+.testing-map {
+  display: flex;
+  justify-content: space-between;
+}
+
+button {
+  width: 120px; /* Set the desired button width */
+  padding: 10px 20px; /* Add padding for better spacing */
+  background: #007bff; /* Button background color */
+  color: white; /* Button text color */
+  border: none; /* Remove default border */
+  border-radius: 4px; /* Add slight rounding to corners */
+  text-align: center; /* Center text inside the button */
+  font-size: .8rem; /* Set a consistent font size */
+  cursor: pointer; /* Add pointer cursor on hover */
+}
+
+button:hover {
+  background: #0056b3; /* Darker shade for hover effect */
+}
+
+button:disabled {
+  background: #cccccc; /* Light gray for disabled buttons */
+  cursor: not-allowed; /* Show "not allowed" cursor */
 }

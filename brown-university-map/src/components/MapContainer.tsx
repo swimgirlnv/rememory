@@ -6,6 +6,7 @@ import { collection, addDoc, updateDoc, doc, deleteDoc, onSnapshot } from "fireb
 import { db } from "../../firebaseConfig";
 import { v4 as uuidv4 } from "uuid";
 import EditModal from "./EditModal";
+import AboutModal from "./AboutModal";
 
 const MapContainer: React.FC = () => {
   const [isEditingMode, setIsEditingMode] = useState(false);
@@ -17,8 +18,9 @@ const MapContainer: React.FC = () => {
   const [selectedMarkers, setSelectedMarkers] = useState<string[]>([]);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<{ type: "marker" | "path"; id: string } | null>(null);
-  const [viewMode, setViewMode] = useState<"markers" | "paths" | "both">("both");
-
+  const [viewMode] = useState<"markers" | "paths" | "both">("both");
+  const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
+  
   // Fetch and listen for marker and path updates
   useEffect(() => {
     const unsubscribeMarkers = onSnapshot(collection(db, "markers"), (snapshot) => {
@@ -94,7 +96,6 @@ const MapContainer: React.FC = () => {
       const docRef = await addDoc(collection(db, "paths"), newPath);
       setPaths((prev) => [...prev, { ...newPath, id: docRef.id }]);
       setSelectedMarkers([]); // Clear selected markers after path creation
-      alert("Path created successfully!");
     } catch (error) {
       console.error("Error creating path:", error);
     }
@@ -189,41 +190,63 @@ const MapContainer: React.FC = () => {
 
   return (
     <div>
-      <ControlPanel
-        isEditingMode={isEditingMode}
-        isPathEditMode={isPathEditMode}
-        selectedMarkers={selectedMarkers}
-        markers={markers}
-        onFilter={handleFilter}
-        onEditModeToggle={toggleEditingMode}
-        onPathEditModeToggle={togglePathEditMode}
-        onCreatePath={handleCreatePath}
-      />
-      <InteractiveMap
-        isEditingMode={isEditingMode}
-        isPathEditMode={isPathEditMode}
-        markers={viewMode === "paths" ? [] : filteredMarkers}
-        paths={viewMode === "markers" ? [] : filteredPaths}
-        selectedMarkers={selectedMarkers}
-        setSelectedMarkers={setSelectedMarkers}
-        onAddMarker={handleAddMarker}
-        onDeleteMarker={deleteMarker}
-        onAddPath={(newPath) => setPaths((prev) => [...prev, newPath])}
-        onDeletePath={deletePath}
-        onEditMarker={(markerId) => openEditModal("marker", markerId)}
-        onEditPath={(pathId) => openEditModal("path", pathId)}
-      />
+      <div className="testing-map">
+        <ControlPanel
+          isEditingMode={isEditingMode}
+          isPathEditMode={isPathEditMode}
+          selectedMarkers={selectedMarkers}
+          markers={markers}
+          onFilter={handleFilter}
+          onEditModeToggle={toggleEditingMode}
+          onPathEditModeToggle={togglePathEditMode}
+          onCreatePath={handleCreatePath}
+          onAboutOpen={() => setIsAboutModalOpen(true)}
+        />
+        <InteractiveMap
+          isEditingMode={isEditingMode}
+          isPathEditMode={isPathEditMode}
+          markers={viewMode === "paths" ? [] : filteredMarkers}
+          paths={viewMode === "markers" ? [] : filteredPaths}
+          selectedMarkers={selectedMarkers}
+          setSelectedMarkers={setSelectedMarkers}
+          onAddMarker={handleAddMarker}
+          onDeleteMarker={deleteMarker}
+          onAddPath={(newPath) => setPaths((prev) => [...prev, newPath])}
+          onDeletePath={deletePath}
+          onEditMarker={(markerId) => openEditModal("marker", markerId)}
+          onEditPath={(pathId) => openEditModal("path", pathId)}
+        />
+      </div>
       <EditModal
+        key={editingItem?.id}
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         onSave={handleSaveEdit}
         data={
           editingItem
             ? editingItem.type === "marker"
-              ? markers.find((m) => m.id === editingItem.id) || null
-              : paths.find((p) => p.id === editingItem.id) || null
+              ? {
+                  id: markers.find((m) => m.id === editingItem.id)?.id || "unknown-id",
+                  name: markers.find((m) => m.id === editingItem.id)?.name || "Unnamed Marker",
+                  memory: markers.find((m) => m.id === editingItem.id)?.memory || "",
+                  media: markers.find((m) => m.id === editingItem.id)?.media || [], // Default to an empty array
+                  classYear: markers.find((m) => m.id === editingItem.id)?.classYear || "Unknown Class Year",
+                  year: markers.find((m) => m.id === editingItem.id)?.year || new Date().getFullYear(),
+                }
+              : {
+                  id: paths.find((p) => p.id === editingItem.id)?.id || "unknown-id",
+                  name: paths.find((p) => p.id === editingItem.id)?.name || "Unnamed Path",
+                  memory: paths.find((p) => p.id === editingItem.id)?.memory || "",
+                  media: paths.find((p) => p.id === editingItem.id)?.media || [], // Default to an empty array
+                  classYear: paths.find((p) => p.id === editingItem.id)?.classYear || "Unknown Class Year",
+                  year: paths.find((p) => p.id === editingItem.id)?.year || new Date().getFullYear(),
+                }
             : null
         }
+      />
+      <AboutModal
+        isOpen={isAboutModalOpen}
+        onClose={() => setIsAboutModalOpen(false)}
       />
     </div>
   );

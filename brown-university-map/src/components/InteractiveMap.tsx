@@ -1,12 +1,11 @@
 import React, { useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents } from "react-leaflet";
 import { LatLngExpression } from "leaflet";
 import { MarkerData, PathData } from "../data/types";
 import { v4 as uuidv4 } from "uuid";
 import L from "leaflet";
-import { OpenStreetMapProvider, GeoSearchControl } from "leaflet-geosearch";
-import "leaflet-geosearch/dist/geosearch.css";
 import ViewDetailsModal from "./ViewDetails";
+import GeoSearch from "./GeoSearch";
 
 const InteractiveMap: React.FC<{
   isEditingMode: boolean;
@@ -79,29 +78,6 @@ const InteractiveMap: React.FC<{
     popupAnchor: [-10, 0],
   });
 
-  const GeoSearch = () => {
-    const map = useMap();
-
-    React.useEffect(() => {
-      const provider = new OpenStreetMapProvider();
-
-      const searchControl = new GeoSearchControl({
-        provider,
-        style: "bar",
-        showMarker: false,
-        retainZoomLevel: false,
-        animateZoom: true,
-      });
-
-      map.addControl(searchControl);
-
-      return () => {
-        map.removeControl(searchControl);
-      };
-    }, [map]);
-
-    return null;
-  };
 
   const getPopupPosition = (path: PathData): LatLngExpression | undefined => {
     const firstMarker = markers.find((m) => m.id === path.markers[0]);
@@ -110,7 +86,7 @@ const InteractiveMap: React.FC<{
 
   return (
     <>
-      <MapContainer center={[41.8268, -71.4025]} zoom={15} style={{ height: "100vh", width: "100%" }}>
+      <MapContainer center={[41.8268, -71.4025]} zoom={15} className="leaflet-container">
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         <GeoSearch />
         <MapClickHandler />
@@ -204,7 +180,7 @@ const InteractiveMap: React.FC<{
         })}
 
         {/* Render path popup */}
-        {isPathEditMode && selectedPathId && paths.find((p) => p.id === selectedPathId) && (
+        {selectedPathDetails && isPathEditMode && (
           <Popup
             position={
               paths
@@ -219,10 +195,10 @@ const InteractiveMap: React.FC<{
             }}
           >
             <p>{paths.find((p) => p.id === selectedPathId)?.name}</p>
-            <button onClick={() => onEditPath(selectedPathId)}>Edit</button>
+            <button onClick={() => onEditPath(selectedPathDetails.id)}>Edit</button>
             <button
               onClick={() => {
-                onDeletePath(selectedPathId);
+                onDeletePath(selectedPathDetails.id);
                 setSelectedPathId(null);
               }}
             >
@@ -232,10 +208,12 @@ const InteractiveMap: React.FC<{
         )}
 
         {/* Render path popup */}
-        {selectedPathDetails && (
+        {selectedPathDetails && !isPathEditMode && (
           <Popup
             position={getPopupPosition(selectedPathDetails)}
-            onClose={() => setSelectedPathDetails(null)}
+            eventHandlers={{
+              remove: () => setSelectedPathDetails(null),
+            }}
           >
             <p>{selectedPathDetails.name}</p>
             <button
@@ -261,7 +239,30 @@ const InteractiveMap: React.FC<{
       <ViewDetailsModal
         isOpen={!!selectedDetails}
         onClose={closeModal}
-        data={selectedDetails?.data || null}
+        data={
+          selectedDetails?.data
+            ? {
+                ...selectedDetails.data,
+                media: {
+                  images: Array.isArray(selectedDetails.data.media)
+                    ? selectedDetails.data.media
+                        ?.filter((item) => item.type === "image")
+                        .map((item) => item.url)
+                    : [], // Fallback to empty array if media is not an array
+                  videoUrl: Array.isArray(selectedDetails.data.media)
+                    ? selectedDetails.data.media
+                        ?.find((item) => item.type === "video")
+                        ?.url || null
+                    : null, // Fallback to null
+                  audioUrl: Array.isArray(selectedDetails.data.media)
+                    ? selectedDetails.data.media
+                        ?.find((item) => item.type === "audio")
+                        ?.url || null
+                    : null, // Fallback to null
+                },
+              }
+            : null
+        }
       />
     </>
   );

@@ -10,6 +10,7 @@ const ControlPanel: React.FC<{
   onEditModeToggle: () => void;
   onPathEditModeToggle: () => void;
   onCreatePath: () => void;
+  onAboutOpen: () => void;
 }> = ({
   isEditingMode,
   isPathEditMode,
@@ -19,6 +20,7 @@ const ControlPanel: React.FC<{
   onEditModeToggle,
   onPathEditModeToggle,
   onCreatePath,
+  onAboutOpen,
 }) => {
   const [classYear, setClassYear] = useState<string | undefined>();
   const [year, setYear] = useState<number | undefined>();
@@ -43,23 +45,26 @@ const ControlPanel: React.FC<{
   const selectedMarkerNames = selectedMarkers
     .map((markerId) => markers.find((marker) => marker.id === markerId)?.name || "Unnamed Marker");
 
-
   return (
     <div className="control-panel">
       <h3>Control Panel</h3>
 
       {isEditingMode ? (
         <>
-          <button onClick={onEditModeToggle}>Disable Edit Mode</button>
           {!isPathEditMode ? (
-            <button onClick={onPathEditModeToggle}>Enable Path Editing Mode</button>
+            <>
+              {/* Editing Mode Active, Path Editing Disabled */}
+              <button onClick={onEditModeToggle}>Disable Edit Mode</button>
+              <button onClick={onPathEditModeToggle}>Enable Path Editing Mode</button>
+            </>
           ) : (
             <>
+              {/* Path Editing Mode Active */}
               <button onClick={onPathEditModeToggle}>Disable Path Editing Mode</button>
               <div>
                 <h4>Selected Markers for Path</h4>
                 <ul>
-                    {selectedMarkerNames.map((name, index) => (
+                  {selectedMarkerNames.map((name, index) => (
                     <li key={index}>{name}</li>
                   ))}
                 </ul>
@@ -70,7 +75,7 @@ const ControlPanel: React.FC<{
         </>
       ) : (
         <>
-          {/* View Mode Control */}
+          {/* View Mode */}
           <button onClick={onEditModeToggle}>Enter Edit Mode</button>
 
           {/* Filter Section */}
@@ -82,7 +87,7 @@ const ControlPanel: React.FC<{
                 value={classYear || ""}
                 onChange={(e) => setClassYear(e.target.value || undefined)}
               >
-                <option value="">-- Select Class Year --</option>
+                <option value="">--</option>
                 {classYearOptions.map((option) => (
                   <option key={option} value={option}>
                     {option}
@@ -96,13 +101,15 @@ const ControlPanel: React.FC<{
                 type="number"
                 placeholder="e.g., 2023"
                 value={year || ""}
-                onChange={(e) => setYear(Number(e.target.value) || undefined)}
+                onChange={(e) => setYear(Number(e.target.value))}
               />
             </label>
             <button onClick={handleFilter}>Apply Filter</button>
           </div>
         </>
       )}
+
+      <button onClick={onAboutOpen}>About</button>
     </div>
   );
 };

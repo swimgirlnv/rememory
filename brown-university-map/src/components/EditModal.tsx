@@ -22,20 +22,32 @@ const EditModal: React.FC<{
     year: number;
   } | null;
 }> = ({ isOpen, onClose, onSave, data }) => {
-  const [name, setName] = useState("");
-  const [memory, setMemory] = useState("");
-  const [media, setMedia] = useState<MediaItem[]>([]);
-  const [classYear, setClassYear] = useState("Freshman");
-  const [year, setYear] = useState(new Date().getFullYear());
+  const [name, setName] = useState(data?.name || "");
+  const [memory, setMemory] = useState(data?.memory || "");
+  const [media, setMedia] = useState<MediaItem[]>(data?.media || []); // Default to empty array
+  const [classYear, setClassYear] = useState(data?.classYear || "Freshman");
+  const [year, setYear] = useState(data?.year || new Date().getFullYear());
   const [isUploading, setIsUploading] = useState(false);
 
-  // Populate fields when modal opens
+  const classYearOptions = [
+    "Freshman",
+    "Sophomore",
+    "Junior",
+    "Senior",
+    "Grad Year 1",
+    "Grad Year 2",
+    "Grad Year 3",
+    "Grad Year 4",
+    "Grad Year 5",
+    "Alumni",
+  ];
+
   useEffect(() => {
     if (data) {
-      console.log("Data received in EditModal:", data); // Debug log
+      console.log("Data received in EditModal:", data);
       setName(data.name);
       setMemory(data.memory);
-      setMedia(data.media || []);
+      setMedia(data.media || []); // Default to empty array if undefined
       setClassYear(data.classYear);
       setYear(data.year);
     }
@@ -59,7 +71,7 @@ const EditModal: React.FC<{
           return { url, type } as MediaItem;
         })
       );
-      setMedia((prev) => [...prev, ...uploadedFiles]);
+      setMedia((prev) => Array.isArray(prev) ? [...prev, ...uploadedFiles] : [...uploadedFiles]); // Fix
     } catch (error) {
       console.error("Error uploading media:", error);
     } finally {
@@ -85,7 +97,13 @@ const EditModal: React.FC<{
         <TipTapEditor initialContent={memory} onUpdate={setMemory} />
         <label>
           Class Year:
-          <input type="text" value={classYear} onChange={(e) => setClassYear(e.target.value)} />
+          <select value={classYear} onChange={(e) => setClassYear(e.target.value)}>
+            {classYearOptions.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
         </label>
         <label>
           Year:
@@ -99,32 +117,38 @@ const EditModal: React.FC<{
           <h3>Media</h3>
           <input type="file" multiple onChange={(e) => handleMediaUpload(e.target.files)} />
           {isUploading && <p>Uploading...</p>}
-          <div className="media-preview">
-            {media.map((item, index) => (
-              <div key={index}>
-                {item.type === "image" && (
-                  <img
-                    src={item.url}
-                    alt={`media-${index}`}
-                    style={{ maxWidth: "100px", margin: "5px" }}
-                  />
-                )}
-                {item.type === "video" && (
-                  <video controls style={{ maxWidth: "100px", margin: "5px" }}>
-                    <source src={item.url} />
-                  </video>
-                )}
-                {item.type === "audio" && (
-                  <audio controls>
-                    <source src={item.url} />
-                  </audio>
-                )}
-              </div>
-            ))}
-          </div>
+          {media.length > 0 && ( // Only render media-preview if media is not empty
+            <div className="media-preview">
+              {media.map((item, index) => (
+                <div key={index}>
+                  {item.type === "image" && (
+                    <img
+                      src={item.url}
+                      alt={`media-${index}`}
+                      style={{ maxWidth: "100px", margin: "5px" }}
+                    />
+                  )}
+                  {item.type === "video" && (
+                    <video controls style={{ maxWidth: "100px", margin: "5px" }}>
+                      <source src={item.url} />
+                    </video>
+                  )}
+                  {item.type === "audio" && (
+                    <audio controls>
+                      <source src={item.url} />
+                    </audio>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-        <button onClick={handleSave}>Save</button>
-        <button onClick={onClose}>Cancel</button>
+        <button className="button" onClick={handleSave}>
+          Save
+        </button>
+        <button className="button" onClick={onClose}>
+          Cancel
+        </button>
       </div>
     </div>
   );
