@@ -13,7 +13,7 @@ const AboutModal: React.FC<{
         <div style={{textAlign:'left'}}>
         <p>
           Welcome to the <strong>Brown University Memory Map</strong>! This interactive map
-          invites you to explore, add, and connect personal memories to meaningful campus locations.
+          invites you to explore, add, and connect personal memories to meaningful locations related to Brown University.
         </p>
         <p>
           Use the control panel to:
@@ -35,8 +35,10 @@ const AboutModal: React.FC<{
         <h4>About Me</h4>
         <p>
           Hi, I'm <strong>Becca Waterson</strong>, the creator of this project! I'm a Senior passionate about combining 
-          storytelling and technology to create meaningful experiences. This project is part of my final work for 
-          <strong>ENGL 1050J: Multimedia Storytelling</strong> (Fall 2024).
+          storytelling and technology to create meaningful experiences. This project is part of my final work for <strong>ENGL 1050J: Multimedia Storytelling</strong> (Fall 2024).
+          I was inspired to explore the intersection of place and memory especially for students who's college experience may have been disrupted 
+          by the pandemic. I wanted to create a space where people could share their stories and memories of Brown University, both as a literal location
+          and as an institution that students have been apart of around the world.
         </p>
         <p>
           You can learn more about me or check out my other projects at:
