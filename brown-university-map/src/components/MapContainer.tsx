@@ -90,6 +90,9 @@ const MapContainer: React.FC = () => {
 
   // Helper: Check if the current user owns an item
   const canEdit = (item: { createdBy: string }) => {
+    if (!currentUser) {
+      return false; // User must be logged in
+    }
     const isCreatedByCurrentUser = item.createdBy === currentUser?.uid;
     console.log("Admin check:", isAdmin);
     console.log("Created by current user:", isCreatedByCurrentUser);
@@ -197,6 +200,11 @@ const MapContainer: React.FC = () => {
 
   // Open Edit Modal
   const openEditModal = (type: "marker" | "path", id: string) => {
+    if (!currentUser) {
+      alert("You must be logged in to edit.");
+      return;
+    }
+
     const item =
       type === "marker"
         ? markers.find((m) => m.id === id)
