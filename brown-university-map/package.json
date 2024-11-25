@@ -13,7 +13,7 @@
     "@tiptap/react": "^2.9.1",
     "@tiptap/starter-kit": "^2.9.1",
     "@types/leaflet-routing-machine": "^3.2.8",
-    "firebase": "^11.0.2",
+    "firebase": "^10.0.0",
     "leaflet": "^1.9.4",
     "leaflet-geosearch": "^4.0.0",
     "leaflet-routing-machine": "^3.2.12",
