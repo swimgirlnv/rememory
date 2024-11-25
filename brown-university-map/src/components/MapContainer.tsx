@@ -49,6 +49,7 @@ const MapContainer: React.FC = () => {
         year: doc.data().year || new Date().getFullYear(),
         classYear: doc.data().classYear || "",
         media: doc.data().media || [],
+        createdBy: doc.data().createdBy,
       }));
       setMarkers(updatedMarkers as MarkerData[]);
     });
@@ -62,6 +63,7 @@ const MapContainer: React.FC = () => {
         year: doc.data().year || new Date().getFullYear(),
         classYear: doc.data().classYear || "",
         media: doc.data().media || [],
+        createdBy: doc.data().createdBy,
       }));
       setPaths(updatedPaths as PathData[]);
     });
@@ -110,31 +112,6 @@ const MapContainer: React.FC = () => {
   };
 
   // Create Path
-  // const handleCreatePath = async () => {
-  //   if (selectedMarkers.length < 2) {
-  //     alert("Please select at least two markers to create a path.");
-  //     return;
-  //   }
-
-  //   const newPath: PathData = {
-  //     id: uuidv4(),
-  //     markers: selectedMarkers,
-  //     name: `Path with ${selectedMarkers.length} Markers`,
-  //     memory: "",
-  //     year: new Date().getFullYear(),
-  //     classYear: "",
-  //     media: [],
-  //     createdBy: currentUser?.uid,
-  //   };
-
-  //   try {
-  //     const docRef = await addDoc(collection(db, "paths"), newPath);
-  //     setPaths((prev) => [...prev, { ...newPath, id: docRef.id }]);
-  //     setSelectedMarkers([]); // Clear selected markers after path creation
-  //   } catch (error) {
-  //     console.error("Error creating path:", error);
-  //   }
-  // };
   const handleCreatePath = async () => {
     if (selectedMarkers.length < 2) {
       alert("Please select at least two markers to create a path.");
@@ -167,14 +144,6 @@ const MapContainer: React.FC = () => {
   };
 
   // Add Marker
-  // const handleAddMarker = async (newMarker: MarkerData) => {
-  //   try {
-  //     const docRef = await addDoc(collection(db, "markers"), newMarker);
-  //     setMarkers((prev) => [...prev, { ...newMarker, id: docRef.id }]);
-  //   } catch (error) {
-  //     console.error("Error adding marker:", error);
-  //   }
-  // };
   const handleAddMarker = async (newMarker: MarkerData) => {
     try {
       if (!currentUser) {
@@ -193,16 +162,6 @@ const MapContainer: React.FC = () => {
   };
 
   // Delete Marker
-  // const deleteMarker = async (markerId: string) => {
-  //   try {
-  //     const markerRef = doc(db, "markers", markerId);
-  //     await deleteDoc(markerRef);
-  //     setMarkers((prev) => prev.filter((m) => m.id !== markerId));
-  //   } catch (error) {
-  //     console.error("Error deleting marker:", error);
-  //   }
-  // };
-
   const deleteMarker = async (markerId: string) => {
     const marker = markers.find((m) => m.id === markerId);
     if (!marker || !canEdit(marker)) {
@@ -220,15 +179,6 @@ const MapContainer: React.FC = () => {
   };
 
   // Delete Path
-  // const deletePath = async (pathId: string) => {
-  //   try {
-  //     const pathRef = doc(db, "paths", pathId);
-  //     await deleteDoc(pathRef);
-  //     setPaths((prev) => prev.filter((p) => p.id !== pathId));
-  //   } catch (error) {
-  //     console.error("Error deleting path:", error);
-  //   }
-  // };
   const deletePath = async (pathId: string) => {
     const path = paths.find((p) => p.id === pathId);
     if (!path || !canEdit(path)) {
@@ -246,10 +196,6 @@ const MapContainer: React.FC = () => {
   };
 
   // Open Edit Modal
-  // const openEditModal = (type: "marker" | "path", id: string) => {
-  //   setEditingItem({ type, id });
-  //   setIsEditModalOpen(true);
-  // };
   const openEditModal = (type: "marker" | "path", id: string) => {
     const item =
       type === "marker"
@@ -273,12 +219,12 @@ const MapContainer: React.FC = () => {
     year: number;
   }) => {
     if (!editingItem) return;
-
+  
     const { type, id } = editingItem;
-
+  
     try {
       const docRef = doc(db, type === "marker" ? "markers" : "paths", id);
-
+  
       const sanitizedData = {
         name: updatedData.name,
         memory: updatedData.memory,
@@ -286,8 +232,25 @@ const MapContainer: React.FC = () => {
         classYear: updatedData.classYear,
         year: updatedData.year,
       };
-
+  
       await updateDoc(docRef, sanitizedData);
+  
+      // Update local state after Firestore update
+      if (type === "marker") {
+        setMarkers((prev) =>
+          prev.map((marker) =>
+            marker.id === id ? { ...marker, ...sanitizedData } : marker
+          )
+        );
+      } else {
+        setPaths((prev) =>
+          prev.map((path) =>
+            path.id === id ? { ...path, ...sanitizedData } : path
+          )
+        );
+      }
+  
+      setIsEditModalOpen(false); // Close modal after save
     } catch (error) {
       console.error(`Error updating ${type}:`, error);
     }
@@ -340,6 +303,7 @@ const MapContainer: React.FC = () => {
           onDeletePath={deletePath}
           onEditMarker={(markerId) => openEditModal("marker", markerId)}
           onEditPath={(pathId) => openEditModal("path", pathId)}
+          currentUser={currentUser}
         />
       </div>
       <EditModal

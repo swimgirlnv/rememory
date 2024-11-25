@@ -20,6 +20,7 @@ const InteractiveMap: React.FC<{
   onDeletePath: (pathId: string) => void;
   onEditPath: (pathId: string) => void;
   onEditMarker: (markerId: string) => void;
+  currentUser: { uid: string; email: string };
 }> = ({
   isEditingMode,
   isPathEditMode,
@@ -32,6 +33,7 @@ const InteractiveMap: React.FC<{
   onDeletePath,
   onEditPath,
   onEditMarker,
+  currentUser,
 }) => {
   const [selectedPathId, setSelectedPathId] = useState<string | null>(null);
 
@@ -63,7 +65,7 @@ const InteractiveMap: React.FC<{
             year: new Date().getFullYear(),
             classYear: "",
             media: [],
-            createdBy: uuidv4(),
+            createdBy: currentUser.uid,
           });
         }
       },
