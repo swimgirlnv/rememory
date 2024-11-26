@@ -237,3 +237,25 @@ button.enter:hover,
 button.save:hover {
   background-color: rgb(70, 80, 75); /* Darker green on hover */
 }
+
+/* Logo Styling */
+.logo {
+  display: flex;
+  flex-direction: column; /* Stack the image and text vertically */
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px; /* Add spacing between the logo and the control panel */
+}
+
+.logo img {
+  max-width: 80px; /* Set a reasonable max width for the logo */
+  height: auto; /* Maintain aspect ratio */
+  margin-bottom: 10px; /* Add spacing below the image */
+}
+
+.logo h1 {
+  font-size: 1.5rem; /* Adjust font size */
+  color: #C49D7B;; /* Complementary brown color */
+  text-align: center; /* Center align text */
+  margin: 0; /* Remove default margin */
+}

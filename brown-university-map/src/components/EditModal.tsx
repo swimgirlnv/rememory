@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import TipTapEditor from "./TipTapEditor";
-import uploadFile from "./FirebaseUploader";
 import { MediaItem } from "../data/types";
-import { getStorage, ref, deleteObject } from "firebase/storage";
+import { getStorage, ref, deleteObject, uploadBytes, getDownloadURL } from "firebase/storage";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../../firebaseConfig";
 
@@ -16,6 +15,7 @@ const EditModal: React.FC<{
     media: MediaItem[];
     classYear: string;
     year: number;
+    createdBy: string;
   }) => void;
   data: {
     id: string;
@@ -24,6 +24,7 @@ const EditModal: React.FC<{
     media: MediaItem[];
     classYear: string;
     year: number;
+    createdBy: string;
   } | null;
 }> = ({ isOpen, onClose, onSave, data }) => {
   const [name, setName] = useState(data?.name || "");
@@ -31,6 +32,7 @@ const EditModal: React.FC<{
   const [media, setMedia] = useState<MediaItem[]>(data?.media || []); // Default to empty array
   const [classYear, setClassYear] = useState(data?.classYear || "Freshman");
   const [year, setYear] = useState(data?.year || new Date().getFullYear());
+  const [createdBy, setCreatedBy] = useState(data?.createdBy || "");
   const [isUploading, setIsUploading] = useState(false);
 
   const classYearOptions = [
@@ -54,17 +56,28 @@ const EditModal: React.FC<{
       setMedia(data.media || []); // Default to empty array if undefined
       setClassYear(data.classYear);
       setYear(data.year);
+      setCreatedBy(data.createdBy);
     }
   }, [data]);
 
   const handleMediaUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
-
+  
+    console.log("Media before upload:", media); // Log the structure of `media`
+  
+    if (!data?.id) {
+      console.error("Marker ID is not available for media upload.");
+      return;
+    }
+  
     setIsUploading(true);
     try {
       const uploadedFiles = await Promise.all(
         Array.from(files).map(async (file) => {
-          const url = await uploadFile(file);
+          const storage = getStorage();
+          const storageRef = ref(storage, `media/${data.id}/${file.name}`); // Organize uploads by marker ID
+          await uploadBytes(storageRef, file); // Upload to Firebase Storage
+          const url = await getDownloadURL(storageRef); // Get the download URL
           const type = file.type.startsWith("image")
             ? "image"
             : file.type.startsWith("video")
@@ -75,9 +88,22 @@ const EditModal: React.FC<{
           return { url, type } as MediaItem;
         })
       );
-      setMedia((prev) => Array.isArray(prev) ? [...prev, ...uploadedFiles] : [...uploadedFiles]); // Fix
+  
+      console.log("Uploaded files:", uploadedFiles);
+  
+      // Ensure `media` is an array before updating
+      const currentMedia = Array.isArray(media) ? media : [];
+      const updatedMedia = [...currentMedia, ...uploadedFiles];
+      setMedia(updatedMedia);
+  
+      // Save updated media array to Firestore
+      const markerDocRef = doc(db, "markers", data.id);
+      await updateDoc(markerDocRef, { media: updatedMedia });
+  
+      console.log("Media uploaded and Firestore updated successfully.");
     } catch (error) {
       console.error("Error uploading media:", error);
+      alert("Failed to upload media. Please try again.");
     } finally {
       setIsUploading(false);
     }
@@ -130,7 +156,7 @@ const EditModal: React.FC<{
   // };
 
   const handleSave = () => {
-    onSave({ name, memory, media, classYear, year });
+    onSave({ name, memory, media, classYear, year, createdBy });
     onClose();
   };
 

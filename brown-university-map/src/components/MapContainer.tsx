@@ -352,6 +352,7 @@ if (!currentUser) {
                   media: markers.find((m) => m.id === editingItem.id)?.media || [], // Default to an empty array
                   classYear: markers.find((m) => m.id === editingItem.id)?.classYear || "Unknown Class Year",
                   year: markers.find((m) => m.id === editingItem.id)?.year || new Date().getFullYear(),
+                  createdBy: markers.find((m) => m.id === editingItem.id)?.createdBy || "",
                 }
               : {
                   id: paths.find((p) => p.id === editingItem.id)?.id || "unknown-id",
@@ -360,6 +361,7 @@ if (!currentUser) {
                   media: paths.find((p) => p.id === editingItem.id)?.media || [], // Default to an empty array
                   classYear: paths.find((p) => p.id === editingItem.id)?.classYear || "Unknown Class Year",
                   year: paths.find((p) => p.id === editingItem.id)?.year || new Date().getFullYear(),
+                  createdBy: paths.find((p) => p.id === editingItem.id)?.createdBy || "",
                 }
             : null
         }

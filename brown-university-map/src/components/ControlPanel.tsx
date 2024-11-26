@@ -59,6 +59,10 @@ const ControlPanel: React.FC<{
 
   return (
     <div className="control-panel">
+      <div className='logo'>
+        <img src="https://i.imgur.com/wjbC06J.png" alt="Brown University Logo" />
+        <h1>ReMemory</h1>
+      </div>
       {currentUser ? (
         <div style={{ maxWidth: "160px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
           <p>Welcome, {parseFirstNameFromEmail(currentUser.email)}</p>
