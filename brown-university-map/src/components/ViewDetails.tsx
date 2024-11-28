@@ -28,7 +28,7 @@ const ViewDetailsModal: React.FC<{
       <div className="modal-content">
         <h2>{name || "No Name Available"}</h2>
         <p>
-          <strong>{classYear || "N/A"}, {year || "N/A"}</strong>
+          <strong>{classYear || "N/A"} during {year || "N/A"}</strong>
         </p>
         <div style={{ textAlign: "left" }}>
           <div dangerouslySetInnerHTML={{ __html: memory || "<p>No memory available.</p>" }} />
@@ -47,7 +47,7 @@ const ViewDetailsModal: React.FC<{
             </div>
           </div>
         )}
-        
+
         <div className="media-section">
           {/* Render images */}
           {media.images?.length > 0 ? (
