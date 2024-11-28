@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import TipTapEditor from "./TipTapEditor";
 import { MediaItem } from "../data/types";
 import { getStorage, ref, deleteObject, uploadBytes, getDownloadURL } from "firebase/storage";
-import { doc, updateDoc } from "firebase/firestore";
+import { addDoc, collection, doc, getDocs, updateDoc } from "firebase/firestore";
 import { db } from "../../firebaseConfig";
 
 
@@ -16,6 +16,7 @@ const EditModal: React.FC<{
     classYear: string;
     year: number;
     createdBy: string;
+    tags: string[];
   }) => void;
   data: {
     id: string;
@@ -25,6 +26,7 @@ const EditModal: React.FC<{
     classYear: string;
     year: number;
     createdBy: string;
+    tags: string[];
   } | null;
 }> = ({ isOpen, onClose, onSave, data }) => {
   const [name, setName] = useState(data?.name || "");
@@ -34,6 +36,12 @@ const EditModal: React.FC<{
   const [year, setYear] = useState(data?.year || new Date().getFullYear());
   const [createdBy, setCreatedBy] = useState(data?.createdBy || "");
   const [isUploading, setIsUploading] = useState(false);
+  const [tags, setTags] = useState<string[]>(data?.tags || []);
+  const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
+  const [allTags, setAllTags] = useState<string[]>([]); // All tags in the system
+  const [tagSearch] = useState<string>("");
+  const [tagInput, setTagInput] = useState<string>("");
+
 
   const classYearOptions = [
     "Freshman",
@@ -57,8 +65,52 @@ const EditModal: React.FC<{
       setClassYear(data.classYear);
       setYear(data.year);
       setCreatedBy(data.createdBy);
+      setTags(data.tags);
     }
   }, [data]);
+
+  useEffect(() => {
+    if (memory) {
+      const words = memory
+        .toLowerCase()
+        .replace(/[^a-z\s]/g, "") // Remove special characters
+        .split(" ")
+        .filter((word) => word.length > 4); // Filter out short words
+      const uniqueWords = Array.from(new Set(words)); // Remove duplicates
+  
+      // Suggest top 5 unique words combined with popular existing tags
+      const combinedSuggestions = [...uniqueWords, ...allTags]
+        .filter((tag, index, self) => self.indexOf(tag) === index) // Ensure uniqueness
+        .slice(0, 5); // Limit to 5 suggestions
+  
+      setSuggestedTags(combinedSuggestions);
+    }
+  }, [memory, allTags]);
+
+  useEffect(() => {
+    const fetchTags = async () => {
+      const querySnapshot = await getDocs(collection(db, "tags"));
+      const allTags = querySnapshot.docs.map((doc) => doc.data().name);
+      setAllTags(allTags);
+    };
+    fetchTags();
+  }, []);
+
+  const handleAddTag = async (tag: string) => {
+    if (!tags.includes(tag)) {
+      setTags([...tags, tag]);
+      setTagInput(""); // Clear the input after adding
+      const existingTag = allTags.find((t) => t === tag);
+  
+      if (!existingTag) {
+        await addDoc(collection(db, "tags"), { name: tag, usageCount: 1 }); // Add new tag to Firestore only if it doesn't exist
+      }
+    }
+  };
+  
+  const handleRemoveTag = (tag: string) => {
+    setTags(tags.filter((t) => t !== tag));
+  };
 
   const handleMediaUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -137,28 +189,34 @@ const EditModal: React.FC<{
     }
   };
 
-  // const updateMarkerMedia = async (updatedMedia: MediaItem[]) => {
-  //   if (!data?.id) {
-  //     console.error("Marker ID is not available.");
-  //     return;
-  //   }
+  const handleSave = async () => {
+    if (!data?.id) {
+      console.error("Marker ID is not available for saving.");
+      return;
+    }
   
-  //   try {
-  //     const markerDocRef = doc(db, "markers", data.id); // Reference Firestore document
-  //     await updateDoc(markerDocRef, { media: updatedMedia });
+    try {
+      // Reference Firestore document
+      const markerDocRef = doc(db, "markers", data.id);
   
-  //     console.log("Marker media updated successfully.");
-  //     setMedia(updatedMedia); // Update local state
-  //   } catch (error) {
-  //     console.error("Error updating marker media:", error);
-  //     alert("Failed to update marker. Please try again.");
-  //   }
-  // };
-
-  const handleSave = () => {
-    onSave({ name, memory, media, classYear, year, createdBy });
-    onClose();
+      // Update the Firestore document with all fields, including tags
+      const updatedData = { name, memory, media, classYear, year, createdBy, tags };
+      await updateDoc(markerDocRef, updatedData);
+  
+      console.log("Marker saved successfully:", updatedData);
+  
+      // Pass updated data to the parent component (onSave)
+      onSave(updatedData);
+      onClose();
+    } catch (error) {
+      console.error("Error saving marker:", error);
+      alert("Failed to save the marker. Please try again.");
+    }
   };
+
+  const filteredTags = allTags.filter((tag) =>
+    tag.toLowerCase().includes(tagSearch.toLowerCase())
+  );
 
   if (!isOpen || !data) return null;
 
@@ -189,6 +247,56 @@ const EditModal: React.FC<{
             onChange={(e) => setYear(Number(e.target.value))}
           />
         </label>
+        <div>
+          <h3>Tags</h3>
+
+          {/* Existing Tags */}
+          <div className="tags-container">
+            {tags.map((tag, index) => (
+              <span key={index} className="tag">
+                {tag}
+                <button onClick={() => handleRemoveTag(tag)}>×</button>
+              </span>
+            ))}
+          </div>
+
+          {/* Suggested Tags */}
+          <div className="suggested-tags">
+            <h4>Suggested Tags</h4>
+            {suggestedTags.map((tag, index) => (
+              <button
+                key={index}
+                className="suggested-tag"
+                onClick={() => handleAddTag(tag)}
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
+
+          {/* Search/Create Tags */}
+          <div className="tag-search">
+            <h4>Search or Add Tags</h4>
+            <input
+              type="text"
+              placeholder="Search or create a tag"
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              onKeyPress={(e) => e.key === "Enter" && handleAddTag(tagInput)}
+            />
+            <div className="tag-results">
+              {filteredTags.map((tag, index) => (
+                <button
+                  key={index}
+                  className="search-result-tag"
+                  onClick={() => handleAddTag(tag)}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
         <div>
           <h3>Media</h3>
           <input type="file" multiple onChange={(e) => handleMediaUpload(e.target.files)} />

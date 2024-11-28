@@ -21,6 +21,7 @@ const InteractiveMap: React.FC<{
   onEditPath: (pathId: string) => void;
   onEditMarker: (markerId: string) => void;
   currentUser: { uid: string; email: string };
+  onBoundsChange: (bounds: { north: number; south: number; east: number; west: number }) => void;
 }> = ({
   isEditingMode,
   isPathEditMode,
@@ -34,7 +35,32 @@ const InteractiveMap: React.FC<{
   onEditPath,
   onEditMarker,
   currentUser,
+  onBoundsChange,
 }) => {
+  const MapEventsHandler = () => {
+    const map = useMapEvents({
+      moveend: () => {
+        const bounds = map.getBounds();
+        onBoundsChange({
+          north: bounds.getNorth(),
+          south: bounds.getSouth(),
+          east: bounds.getEast(),
+          west: bounds.getWest(),
+        });
+      },
+      zoomend: () => {
+        const bounds = map.getBounds();
+        onBoundsChange({
+          north: bounds.getNorth(),
+          south: bounds.getSouth(),
+          east: bounds.getEast(),
+          west: bounds.getWest(),
+        });
+      },
+    });
+    return null;
+  };
+
   const [selectedPathId, setSelectedPathId] = useState<string | null>(null);
 
   const [selectedPathDetails, setSelectedPathDetails] = useState<PathData | null>(null);
@@ -46,6 +72,7 @@ const InteractiveMap: React.FC<{
       year: number;
       classYear: string;
       media: { url: string; type: "image" | "video" | "audio" }[];
+      tags: string[];
       connectedMarkers?: string[];
     };
   } | null>(null);
@@ -66,20 +93,13 @@ const InteractiveMap: React.FC<{
             classYear: "",
             media: [],
             createdBy: currentUser.uid,
+            tags: [],
           });
         }
       },
     });
     return null;
   };
-
-  // const wandIcon = L.icon({
-  //   iconUrl:
-  //     "https://images.ctfassets.net/3prze68gbwl1/assetglossary-17su9wok1ui0z7w/c4c4bdcdf0d0f86447d3efc450d1d081/map-marker.png",
-  //   iconSize: [18, 18],
-  //   iconAnchor: [10, 10],
-  //   popupAnchor: [0, 0],
-  // });
 
   const getMarkerIcon = (classYear: string): L.Icon => {
     const gradientMap: { [key: string]: { start: string; end: string } } = {
@@ -137,6 +157,7 @@ const InteractiveMap: React.FC<{
     <>
       <MapContainer center={[41.8268, -71.4025]} zoom={15} className="leaflet-container">
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        <MapEventsHandler />
         <GeoSearch />
         <MapClickHandler />
 
@@ -156,6 +177,7 @@ const InteractiveMap: React.FC<{
                         year: marker.year,
                         classYear: marker.classYear,
                         media: marker.media || [],
+                        tags: marker.tags || [],
                       },
                     })
                   }
@@ -278,6 +300,7 @@ const InteractiveMap: React.FC<{
                     year: selectedPathDetails.year,
                     classYear: selectedPathDetails.classYear,
                     media: selectedPathDetails.media || [],
+                    tags: selectedPathDetails.tags || [],
                   },
                 })
               }

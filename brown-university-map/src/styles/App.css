@@ -259,3 +259,53 @@ button.save:hover {
   text-align: center; /* Center align text */
   margin: 0; /* Remove default margin */
 }
+
+.tags-container {
+  display: flex;
+  gap: 0.5em;
+  flex-wrap: wrap;
+}
+
+.tag {
+  background: #e0e0e0;
+  border-radius: 16px;
+  padding: 0.2em 0.5em;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.9em;
+}
+
+.tag button {
+  margin-left: 0.5em;
+  background: none;
+  border: none;
+  font-size: 1em;
+  cursor: pointer;
+}
+
+.suggested-tags button {
+  background: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 16px;
+  padding: 0.2em 0.5em;
+  margin: 0.2em;
+  cursor: pointer;
+}
+
+.tags-section {
+  margin-top: 20px;
+}
+
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.tag {
+  background-color: #f0f0f0;
+  border-radius: 5px;
+  padding: 5px 10px;
+  font-size: 0.9em;
+  color: #333;
+}

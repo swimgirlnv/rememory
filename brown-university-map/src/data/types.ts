@@ -13,6 +13,7 @@ export interface MarkerData {
   classYear: string;
   media?: MediaItem[]; // Unified media array
   createdBy: string;
+  tags: string[];
 }
 
 export interface PathData {
@@ -24,4 +25,5 @@ export interface PathData {
   classYear: string;
   media?: MediaItem[]; // Unified media array
   createdBy: string;
+  tags: string[];
 }

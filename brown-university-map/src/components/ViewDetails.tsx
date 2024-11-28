@@ -11,6 +11,7 @@ const ViewDetailsModal: React.FC<{
     classYear: string;
     year: number;
     media: { images: string[]; videoUrl: string | null; audioUrl: string | null };
+    tags?: string[];
   } | null;
 }> = ({ isOpen, onClose, data }) => {
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -18,7 +19,7 @@ const ViewDetailsModal: React.FC<{
 
   if (!isOpen || !data) return null;
 
-  const { name, memory, classYear, year, media } = data;
+  const { name, memory, classYear, year, media, tags } = data;
 
   console.log("Data passed to ViewDetailsModal:", data);
 
@@ -32,6 +33,21 @@ const ViewDetailsModal: React.FC<{
         <div style={{ textAlign: "left" }}>
           <div dangerouslySetInnerHTML={{ __html: memory || "<p>No memory available.</p>" }} />
         </div>
+
+        {/* Tags Section */}
+        {tags && tags.length > 0 && (
+          <div className="tags-section">
+            <h4>Tags</h4>
+            <div className="tags-container">
+              {tags.map((tag, index) => (
+                <span key={index} className="tag">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+        
         <div className="media-section">
           {/* Render images */}
           {media.images?.length > 0 ? (

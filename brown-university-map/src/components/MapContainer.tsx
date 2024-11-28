@@ -4,13 +4,13 @@ import InteractiveMap from "./InteractiveMap";
 import ControlPanel from "./ControlPanel"; // Import Control Panel
 import { MarkerData, PathData, MediaItem } from "../data/types";
 import { collection, addDoc, updateDoc, doc, deleteDoc, onSnapshot } from "firebase/firestore";
-import { db } from "../../firebaseConfig";
 import { v4 as uuidv4 } from "uuid";
 import EditModal from "./EditModal";
 import AboutModal from "./AboutModal";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import RightPanel from "./RightPanel";
 import ViewDetailsModal from "./ViewDetails";
+import { db } from "../../firebaseConfig";
 
 const MapContainer: React.FC = () => {
   const [selectedDetails, setSelectedDetails] = useState<{
@@ -21,6 +21,7 @@ const MapContainer: React.FC = () => {
       year: number;
       classYear: string;
       media: { url: string; type: "image" | "video" | "audio" }[];
+      tags?: string[];
     };
   } | null>(null);
   const [isEditingMode, setIsEditingMode] = useState(false);
@@ -35,8 +36,11 @@ const MapContainer: React.FC = () => {
   const [viewMode] = useState<"markers" | "paths" | "both">("both");
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
-  console.log(selectedDetails);
-  
+  const [mapBounds, setMapBounds] = useState<{ north: number; south: number; east: number; west: number } | undefined>(undefined);
+
+  const handleBoundsChange = (bounds: { north: number; south: number; east: number; west: number }) => {
+    setMapBounds(bounds);
+  };  
   // Monitor authenticated user
   useEffect(() => {
     const auth = getAuth();
@@ -62,6 +66,7 @@ const MapContainer: React.FC = () => {
         classYear: doc.data().classYear || "",
         media: doc.data().media || [],
         createdBy: doc.data().createdBy,
+        tags: doc.data().tags || [],
       }));
       setMarkers(updatedMarkers as MarkerData[]);
     });
@@ -148,6 +153,7 @@ const MapContainer: React.FC = () => {
         classYear: "",
         media: [],
         createdBy: currentUser.uid, // Save the current user's UID
+        tags: [],
       };
   
       const docRef = await addDoc(collection(db, "paths"), newPath);
@@ -237,6 +243,7 @@ if (!currentUser) {
     media: MediaItem[];
     classYear: string;
     year: number;
+    tags: string[];
   }) => {
     if (!editingItem) return;
   
@@ -251,6 +258,7 @@ if (!currentUser) {
         media: updatedData.media || [],
         classYear: updatedData.classYear,
         year: updatedData.year,
+        tags: updatedData.tags,
       };
   
       await updateDoc(docRef, sanitizedData);
@@ -324,6 +332,7 @@ if (!currentUser) {
           onEditMarker={(markerId) => openEditModal("marker", markerId)}
           onEditPath={(pathId) => openEditModal("path", pathId)}
           currentUser={currentUser}
+          onBoundsChange={handleBoundsChange}
         />
         {/* Right-side list panel */}
         <RightPanel
@@ -335,6 +344,8 @@ if (!currentUser) {
           onPathClick={(pathData) =>
             setSelectedDetails({ type: "path", data: pathData })
           }
+          filteredByZoom={true} // Enable filtering by zoom
+          mapBounds={mapBounds} // Pass map bounds for filtering
         />
       </div>
       <EditModal
@@ -353,6 +364,7 @@ if (!currentUser) {
                   classYear: markers.find((m) => m.id === editingItem.id)?.classYear || "Unknown Class Year",
                   year: markers.find((m) => m.id === editingItem.id)?.year || new Date().getFullYear(),
                   createdBy: markers.find((m) => m.id === editingItem.id)?.createdBy || "",
+                  tags: markers.find((m) => m.id === editingItem.id)?.tags || [],
                 }
               : {
                   id: paths.find((p) => p.id === editingItem.id)?.id || "unknown-id",
@@ -362,6 +374,7 @@ if (!currentUser) {
                   classYear: paths.find((p) => p.id === editingItem.id)?.classYear || "Unknown Class Year",
                   year: paths.find((p) => p.id === editingItem.id)?.year || new Date().getFullYear(),
                   createdBy: paths.find((p) => p.id === editingItem.id)?.createdBy || "",
+                  tags: paths.find((p) => p.id === editingItem.id)?.tags || [],
                 }
             : null
         }
