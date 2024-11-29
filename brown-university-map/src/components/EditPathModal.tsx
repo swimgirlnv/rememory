@@ -223,10 +223,6 @@ console.log(createdBy);
           <input type="number" value={year} onChange={(e) => setYear(Number(e.target.value))} />
         </label>
         <div>
-          <h3>Pins</h3>
-          <p>{pins.join(", ")}</p>
-        </div>
-        <div>
           <h3>Tags</h3>
 
           {/* Existing Tags */}
