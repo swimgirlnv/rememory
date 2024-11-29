@@ -1,12 +1,13 @@
 import React, { useState } from "react";
-import { MarkerData } from "../data/types";
+import { MarkerData, PinData } from "../data/types";
 import { useAuth } from "./AuthContext";
 
 
 const ControlPanel: React.FC<{
   isEditingMode: boolean;
   isPathEditMode: boolean;
-  selectedMarkers: string[];
+  selectedPins: string[];
+  pins: PinData[];
   markers: MarkerData[];
   onFilter: (filter: { classYear?: string; year?: number }) => void;
   onEditModeToggle: () => void;
@@ -16,8 +17,8 @@ const ControlPanel: React.FC<{
 }> = ({
   isEditingMode,
   isPathEditMode,
-  selectedMarkers,
-  markers,
+  selectedPins,
+  pins,
   onFilter,
   onEditModeToggle,
   onPathEditModeToggle,
@@ -54,9 +55,6 @@ const ControlPanel: React.FC<{
     "Alumni",
   ];
 
-  const selectedMarkerNames = selectedMarkers
-    .map((markerId) => markers.find((marker) => marker.id === markerId)?.name || "Unnamed Marker");
-
   return (
     <div className="control-panel">
       <div className='logo'>
@@ -86,11 +84,12 @@ const ControlPanel: React.FC<{
               {/* Path Editing Mode Active */}
               <button onClick={onPathEditModeToggle} className='exit'>Disable Path Editing Mode</button>
               <div>
-                <h4>Selected Markers for Path</h4>
+                <h4>Selected Pins for Path</h4>
                 <ul>
-                  {selectedMarkerNames.map((name, index) => (
-                    <li key={index}>{name}</li>
-                  ))}
+                  {selectedPins.map((pinId) => {
+                    const pin = pins.find((p) => p.id === pinId);
+                    return <li key={pinId}>{pin?.name || "Unnamed Pin"}</li>;
+                  })}
                 </ul>
                 <button onClick={onCreatePath}>Create Path</button>
               </div>

@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
 import TipTapEditor from "./TipTapEditor";
 import { MediaItem } from "../data/types";
-import { getStorage, ref, deleteObject, uploadBytes, getDownloadURL } from "firebase/storage";
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { addDoc, collection, doc, getDocs, updateDoc } from "firebase/firestore";
 import { db } from "../../firebaseConfig";
 
-
-const EditModal: React.FC<{
+const EditMarkerModal: React.FC<{
   isOpen: boolean;
   onClose: () => void;
   onSave: (updatedData: {
@@ -32,20 +31,19 @@ const EditModal: React.FC<{
 }> = ({ isOpen, onClose, onSave, onDelete, data }) => {
   const [name, setName] = useState(data?.name || "");
   const [memory, setMemory] = useState(data?.memory || "");
-  const [media, setMedia] = useState<MediaItem[]>(data?.media || []); // Default to empty array
-  const [classYear, setClassYear] = useState(data?.classYear || "Freshman");
-  const [year, setYear] = useState(data?.year || new Date().getFullYear());
   const [createdBy, setCreatedBy] = useState(data?.createdBy || "");
+  const [media, setMedia] = useState<MediaItem[]>(data?.media || []);
+  const [classYear, setClassYear] = useState(data?.classYear || "--");
+  const [year, setYear] = useState(data?.year || new Date().getFullYear());
   const [isUploading, setIsUploading] = useState(false);
   const [tags, setTags] = useState<string[]>(data?.tags || []);
-  const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
-  const [allTags, setAllTags] = useState<string[]>([]); // All tags in the system
+  const [allTags, setAllTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState("");
   const [tagSearch] = useState<string>("");
-  const [tagInput, setTagInput] = useState<string>("");
+  const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
 
-
-  const classYearOptions = [
-    "Freshman",
+console.log(createdBy);
+  const classYearOptions = [ "--", "Freshman",
     "Sophomore",
     "Junior",
     "Senior",
@@ -54,83 +52,58 @@ const EditModal: React.FC<{
     "Grad Year 3",
     "Grad Year 4",
     "Grad Year 5",
-    "Alumni",
-  ];
+    "Alumni"];
 
-  useEffect(() => {
-    if (data) {
-      console.log("Data received in EditModal:", data);
-      setName(data.name);
-      setMemory(data.memory);
-      setMedia(data.media || []); // Default to empty array if undefined
-      setClassYear(data.classYear);
-      setYear(data.year);
-      setCreatedBy(data.createdBy);
-      setTags(data.tags);
-    }
-  }, [data]);
-
-  useEffect(() => {
-    if (memory) {
-      const words = memory
-        .toLowerCase()
-        .replace(/[^a-z\s]/g, "") // Remove special characters
-        .split(" ")
-        .filter((word) => word.length > 4); // Filter out short words
-      const uniqueWords = Array.from(new Set(words)); // Remove duplicates
-  
-      // Suggest top 5 unique words combined with popular existing tags
-      const combinedSuggestions = [...uniqueWords, ...allTags]
-        .filter((tag, index, self) => self.indexOf(tag) === index) // Ensure uniqueness
-        .slice(0, 5); // Limit to 5 suggestions
-  
-      setSuggestedTags(combinedSuggestions);
-    }
-  }, [memory, allTags]);
-
-  useEffect(() => {
-    const fetchTags = async () => {
-      const querySnapshot = await getDocs(collection(db, "tags"));
-      const allTags = querySnapshot.docs.map((doc) => doc.data().name);
-      setAllTags(allTags);
-    };
-    fetchTags();
-  }, []);
-
-  const handleAddTag = async (tag: string) => {
-    if (!tags.includes(tag)) {
-      setTags([...tags, tag]);
-      setTagInput(""); // Clear the input after adding
-      const existingTag = allTags.find((t) => t === tag);
-  
-      if (!existingTag) {
-        await addDoc(collection(db, "tags"), { name: tag, usageCount: 1 }); // Add new tag to Firestore only if it doesn't exist
-      }
-    }
-  };
-  
-  const handleRemoveTag = (tag: string) => {
-    setTags(tags.filter((t) => t !== tag));
-  };
+    useEffect(() => {
+        if (data) {
+          console.log("Data received in EditModal:", data);
+          setName(data.name);
+          setMemory(data.memory);
+          setMedia(data.media || []); // Default to empty array if undefined
+          setClassYear(data.classYear);
+          setYear(data.year);
+          setCreatedBy(data.createdBy);
+          setTags(data.tags);
+        }
+      }, [data]);
+    
+      useEffect(() => {
+        if (memory) {
+          const words = memory
+            .toLowerCase()
+            .replace(/[^a-z\s]/g, "") // Remove special characters
+            .split(" ")
+            .filter((word) => word.length > 4); // Filter out short words
+          const uniqueWords = Array.from(new Set(words)); // Remove duplicates
+      
+          // Suggest top 5 unique words combined with popular existing tags
+          const combinedSuggestions = [...uniqueWords, ...allTags]
+            .filter((tag, index, self) => self.indexOf(tag) === index) // Ensure uniqueness
+            .slice(0, 5); // Limit to 5 suggestions
+      
+          setSuggestedTags(combinedSuggestions);
+        }
+      }, [memory, allTags]);
+    
+      useEffect(() => {
+        const fetchTags = async () => {
+          const querySnapshot = await getDocs(collection(db, "tags"));
+          const allTags = querySnapshot.docs.map((doc) => doc.data().name);
+          setAllTags(allTags);
+        };
+        fetchTags();
+      }, []);
 
   const handleMediaUpload = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-  
-    console.log("Media before upload:", media); // Log the structure of `media`
-  
-    if (!data?.id) {
-      console.error("Marker ID is not available for media upload.");
-      return;
-    }
-  
+    if (!files || files.length === 0 || !data?.id) return;
     setIsUploading(true);
     try {
       const uploadedFiles = await Promise.all(
         Array.from(files).map(async (file) => {
           const storage = getStorage();
-          const storageRef = ref(storage, `media/${data.id}/${file.name}`); // Organize uploads by marker ID
-          await uploadBytes(storageRef, file); // Upload to Firebase Storage
-          const url = await getDownloadURL(storageRef); // Get the download URL
+          const storageRef = ref(storage, `media/markers/${data.id}/${file.name}`);
+          await uploadBytes(storageRef, file);
+          const url = await getDownloadURL(storageRef);
           const type = file.type.startsWith("image")
             ? "image"
             : file.type.startsWith("video")
@@ -141,28 +114,34 @@ const EditModal: React.FC<{
           return { url, type } as MediaItem;
         })
       );
-  
-      console.log("Uploaded files:", uploadedFiles);
-  
-      // Ensure `media` is an array before updating
-      const currentMedia = Array.isArray(media) ? media : [];
-      const updatedMedia = [...currentMedia, ...uploadedFiles];
-      setMedia(updatedMedia);
-  
-      // Save updated media array to Firestore
-      const collectionName = data.classYear ? "paths" : "markers"; // Assuming paths have a `classYear` field
-      const docRef = doc(db, collectionName, data.id);
-      await updateDoc(docRef, { media: updatedMedia });
-  
-      console.log("Media uploaded and Firestore updated successfully.");
-    } catch (error) {
-      console.error("Error uploading media:", error);
-      alert("Failed to upload media. Please try again.");
+      setMedia((prev) => [...prev, ...uploadedFiles]);
     } finally {
       setIsUploading(false);
     }
   };
 
+  const handleSave = () => {
+    if (!data?.id || !data.createdBy) {
+      console.error("Missing required fields: id or createdBy");
+      return;
+    }
+  
+    const updatedData = {
+      id: data.id, // Ensure id is passed
+      name,
+      memory,
+      media,
+      classYear,
+      year,
+      createdBy: data.createdBy, // Ensure createdBy is passed
+      tags,
+    };
+  
+    onSave(updatedData); // Pass the updated data
+    onClose(); // Close the modal
+  };
+
+  if (!isOpen || !data) return null;
 
   const handleDeleteFile = async (fileUrl: string) => {
     if (!data?.id) {
@@ -191,78 +170,30 @@ const EditModal: React.FC<{
     }
   };
 
-  const handleSave = async () => {
-    if (!data?.id) {
-      console.error("Marker ID is not available for saving.");
-      return;
-    }
+  const handleAddTag = async (tag: string) => {
+    if (!tags.includes(tag)) {
+      setTags([...tags, tag]);
+      setTagInput(""); // Clear the input after adding
+      const existingTag = allTags.find((t) => t === tag);
   
-    try {
-      // Reference Firestore document
-      const markerDocRef = doc(db, "markers", data.id);
-  
-      // Update the Firestore document with all fields, including tags
-      const updatedData = { name, memory, media, classYear, year, createdBy, tags };
-      await updateDoc(markerDocRef, updatedData);
-  
-      console.log("Marker saved successfully:", updatedData);
-  
-      // Pass updated data to the parent component (onSave)
-      onSave(updatedData);
-      onClose();
-    } catch (error) {
-      console.error("Error saving marker:", error);
-      alert("Failed to save the marker. Please try again.");
+      if (!existingTag) {
+        await addDoc(collection(db, "tags"), { name: tag, usageCount: 1 }); // Add new tag to Firestore only if it doesn't exist
+      }
     }
   };
-
-  // const handleSave = async () => {
-  //   if (!data?.id) {
-  //     console.error("ID is not available for saving.");
-  //     return;
-  //   }
   
-  //   try {
-  //     const updatedData = { name, memory, media, classYear, year, createdBy, tags };
-  
-  //     // Determine if the data is a Path or Marker
-  //     const collectionName = data.memory ? "markers" : "paths"; // Assume `memory` indicates a marker
-  //     const docRef = doc(db, collectionName, data.id);
-  
-  //     // Update the appropriate Firestore collection
-  //     await updateDoc(docRef, updatedData);
-  
-  //     console.log(`${collectionName === "markers" ? "Marker" : "Path"} saved successfully:`, updatedData);
-  
-  //     // Pass updated data to the parent component (onSave)
-  //     onSave(updatedData);
-  //     onClose();
-  //   } catch (error) {
-  //     console.error(`Error saving ${data.memory ? "marker" : "path"}:`, error);
-  //     alert(`Failed to save the ${data.memory ? "marker" : "path"}. Please try again.`);
-  //   }
-  // };
-
-  const handleConfirmDelete = () => {
-    const confirmation = window.confirm(
-      "Are you sure you want to delete this item? This action cannot be undone."
-    );
-    if (confirmation) {
-      onDelete();
-      onClose();
-    }
+  const handleRemoveTag = (tag: string) => {
+    setTags(tags.filter((t) => t !== tag));
   };
 
   const filteredTags = allTags.filter((tag) =>
     tag.toLowerCase().includes(tagSearch.toLowerCase())
   );
 
-  if (!isOpen || !data) return null;
-
   return (
     <div className="modal-overlay">
       <div className="modal-content">
-        <h2>Edit {name}</h2>
+        <h2>Edit Marker: {name}</h2>
         <label>
           Name:
           <input type="text" value={name} onChange={(e) => setName(e.target.value)} />
@@ -280,11 +211,7 @@ const EditModal: React.FC<{
         </label>
         <label>
           Year:
-          <input
-            type="number"
-            value={year}
-            onChange={(e) => setYear(Number(e.target.value))}
-          />
+          <input type="number" value={year} onChange={(e) => setYear(Number(e.target.value))} />
         </label>
         <div>
           <h3>Tags</h3>
@@ -367,21 +294,12 @@ const EditModal: React.FC<{
             </div>
           )}
         </div>
-        <button className="save" onClick={handleSave}>
-          Save
-        </button>
-        <button
-            className="delete"
-            onClick={handleConfirmDelete}
-          >
-            Delete
-          </button>
-        <button onClick={onClose}>
-          Cancel
-        </button>
+        <button className='save' onClick={handleSave}>Save</button>
+        <button className='delete' onClick={onDelete}>Delete</button>
+        <button onClick={onClose}>Cancel</button>
       </div>
     </div>
   );
 };
 
-export default EditModal;
+export default EditMarkerModal;

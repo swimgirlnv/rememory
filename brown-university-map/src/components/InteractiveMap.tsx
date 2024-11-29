@@ -1,19 +1,22 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents } from "react-leaflet";
 import { LatLngExpression } from "leaflet";
-import { MarkerData, PathData } from "../data/types";
+import { MarkerData, PathData, PinData } from "../data/types";
 import { v4 as uuidv4 } from "uuid";
 import L from "leaflet";
 import ViewDetailsModal from "./ViewDetails";
 import GeoSearch from "./GeoSearch";
+import { addDoc, collection, deleteDoc, doc, onSnapshot } from "firebase/firestore";
+import { db } from "../../firebaseConfig";
 
 const InteractiveMap: React.FC<{
   isEditingMode: boolean;
   isPathEditMode: boolean;
+  viewMode: "markers" | "paths" | "both";
   markers: MarkerData[];
   paths: PathData[];
-  selectedMarkers: string[];
-  setSelectedMarkers: React.Dispatch<React.SetStateAction<string[]>>;
+  selectedPins: string[];
+  setSelectedPins: React.Dispatch<React.SetStateAction<string[]>>;
   onAddMarker: (newMarker: MarkerData) => void;
   onDeleteMarker: (markerId: string) => void;
   onAddPath: (newPath: PathData) => void;
@@ -27,8 +30,8 @@ const InteractiveMap: React.FC<{
   isPathEditMode,
   markers,
   paths,
-  selectedMarkers,
-  setSelectedMarkers,
+  selectedPins,
+  setSelectedPins,
   onAddMarker,
   onDeleteMarker,
   onDeletePath,
@@ -37,6 +40,22 @@ const InteractiveMap: React.FC<{
   currentUser,
   onBoundsChange,
 }) => {
+
+  useEffect(() => {
+    const unsubscribePins = onSnapshot(collection(db, "pins"), (snapshot) => {
+      const updatedPins = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        lat: doc.data().lat,
+        lng: doc.data().lng,
+        name: doc.data().name || "Unnamed Pin",
+        createdBy: doc.data().createdBy,
+      }));
+      setPins(updatedPins);
+    });
+  
+    return () => unsubscribePins();
+  }, []);
+  
   const MapEventsHandler = () => {
     const map = useMapEvents({
       moveend: () => {
@@ -62,7 +81,7 @@ const InteractiveMap: React.FC<{
   };
 
   const [selectedPathId, setSelectedPathId] = useState<string | null>(null);
-
+  const [pins, setPins] = useState<PinData[]>([]);
   const [selectedPathDetails, setSelectedPathDetails] = useState<PathData | null>(null);
   const [selectedDetails, setSelectedDetails] = useState<{
     type: "marker" | "path";
@@ -149,10 +168,68 @@ const InteractiveMap: React.FC<{
 
 
   const getPopupPosition = (path: PathData): LatLngExpression | undefined => {
-    const firstMarker = markers.find((m) => m.id === path.markers[0]);
+    const firstMarker = markers.find((m) => m.id === path.pins[0]);
     return firstMarker ? [firstMarker.lat, firstMarker.lng] : undefined;
   };
 
+  const handleAddPin = async (lat: number, lng: number) => {
+    const newPin: PinData = {
+      id: uuidv4(),
+      lat,
+      lng,
+      name: "Unnamed Pin",
+      createdBy: currentUser.uid,
+    };
+  
+    try {
+      const docRef = await addDoc(collection(db, "pins"), newPin);
+      setPins((prev) => [...prev, { ...newPin, id: docRef.id }]);
+    } catch (error) {
+      console.error("Error adding pin:", error);
+    }
+  };
+
+  const PathEditHandler = () => {
+    useMapEvents({
+      click(e) {
+        handleAddPin(e.latlng.lat, e.latlng.lng);
+      },
+    });
+    return null;
+  };
+
+  const handleDeletePin = async (pinId: string) => {
+    const pin = pins.find((p) => p.id === pinId);
+    if (!pin || pin.createdBy !== currentUser.uid) {
+      alert("You are not authorized to delete this pin.");
+      return;
+    }
+  
+    try {
+      await deleteDoc(doc(db, "pins", pinId)); // Delete from Firestore
+      setPins((prev) => prev.filter((p) => p.id !== pinId)); // Update local state
+    } catch (error) {
+      console.error("Error deleting pin:", error);
+    }
+  };
+
+  const unselectedPinIcon = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="48" viewBox="0 0 32 48">
+      <path
+        d="M16 0 C24.837 0 32 7.163 32 16 C32 26 16 48 16 48 C16 48 0 26 0 16 C0 7.163 7.163 0 16 0 Z"
+        fill="#8B4513" />
+      <circle cx="16" cy="16" r="8" fill="white" />
+    </svg>`)}
+  `;
+  
+  const selectedPinIcon = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="48" viewBox="0 0 32 48">
+      <path
+        d="M16 0 C24.837 0 32 7.163 32 16 C32 26 16 48 16 48 C16 48 0 26 0 16 C0 7.163 7.163 0 16 0 Z"
+        fill="#FFD700" stroke="#FF4500" stroke-width="2" />
+      <circle cx="16" cy="16" r="8" fill="white" />
+    </svg>`)}
+  `;
   return (
     <>
       <MapContainer center={[41.8268, -71.4025]} zoom={15} className="leaflet-container">
@@ -162,7 +239,7 @@ const InteractiveMap: React.FC<{
         <MapClickHandler />
 
         {/* Render existing markers */}
-        {markers.map((marker) => (
+        {!isPathEditMode && markers.map((marker) => (
           <Marker key={marker.id} icon={getMarkerIcon(marker.classYear)} position={[marker.lat, marker.lng]}>
             <Popup>
               <p>{marker.name}</p>
@@ -207,14 +284,14 @@ const InteractiveMap: React.FC<{
                   {isPathEditMode && (
                     <button
                       onClick={() =>
-                        setSelectedMarkers((prev) =>
+                        setSelectedPins((prev) =>
                           prev.includes(marker.id)
                             ? prev.filter((id) => id !== marker.id)
                             : [...prev, marker.id]
                         )
                       }
                     >
-                      {selectedMarkers.includes(marker.id) ? "Deselect" : "Select"}
+                      {selectedPins.includes(marker.id) ? "Deselect" : "Select"}
                     </button>
                   )}
                 </>
@@ -225,27 +302,40 @@ const InteractiveMap: React.FC<{
 
         {/* Render paths */}
         {paths.map((path) => {
-          const positions = path.markers
-            .map((id) => {
-              const marker = markers.find((m) => m.id === id);
-              return marker?.lat !== undefined && marker?.lng !== undefined
-                ? [marker.lat, marker.lng]
-                : null;
+          const positions = path.pins
+            .map((pinId) => {
+              const pin = pins.find((p) => p.id === pinId);
+              return pin ? [pin.lat, pin.lng] : null;
             })
             .filter((position): position is [number, number] => position !== null);
+
+          if (positions.length < 2) return null; // Skip paths with insufficient positions
 
           return (
             <Polyline
               key={path.id}
               positions={positions}
-              color="#8B4513" // Beautiful SaddleBrown
-              weight={4}
+              color="#8B4513"
+              weight={1.5}
               eventHandlers={{
                 click: () => {
                   if (isPathEditMode) {
-                    setSelectedPathId(path.id);
+                    // Open Edit Modal
+                    onEditPath(path.id);
+                  } else {
+                    // Open View Modal
+                    setSelectedDetails({
+                      type: "path",
+                      data: {
+                        name: path.name,
+                        memory: path.memory,
+                        year: path.year,
+                        classYear: path.classYear,
+                        media: path.media || [],
+                        tags: path.tags || [],
+                      },
+                    });
                   }
-                  setSelectedPathDetails(path);
                 },
               }}
             />
@@ -258,7 +348,7 @@ const InteractiveMap: React.FC<{
             position={
               paths
                 .find((p) => p.id === selectedPathId)
-                ?.markers.map((id) => {
+                ?.pins.map((id) => {
                   const marker = markers.find((m) => m.id === id);
                   return [marker?.lat || 0, marker?.lng || 0];
                 })?.[0] as LatLngExpression
@@ -280,6 +370,46 @@ const InteractiveMap: React.FC<{
             </button>
           </Popup>
         )}
+
+        {isPathEditMode && <PathEditHandler />}
+        {isPathEditMode &&
+          pins.map((pin) => (
+            <Marker
+              key={pin.id}
+              position={[pin.lat, pin.lng]}
+              icon={
+                selectedPins.includes(pin.id)
+                  ? L.icon({ iconUrl: selectedPinIcon, iconSize: [25, 25] }) // Use a different icon for selected pins
+                  : L.icon({ iconUrl: unselectedPinIcon, iconSize: [20, 20] }) // Default icon
+              }
+              eventHandlers={{
+                click: () => {
+                  if (isPathEditMode) {
+                    setSelectedPins((prev) =>
+                      prev.includes(pin.id)
+                        ? prev.filter((id) => id !== pin.id) // Deselect if already selected
+                        : [...prev, pin.id] // Select if not selected
+                    );
+                  }
+                },
+              }}
+            >
+              <Popup>
+                {isPathEditMode && (
+                  <p>{selectedPins.includes(pin.id) ? "Selected for Path" : "Click to Select"}</p>
+                )}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent interfering with the map click
+                    handleDeletePin(pin.id); // Call the delete function
+                  }}
+                  className="delete"
+                >
+                  Delete Pin
+                </button>
+              </Popup>
+            </Marker>
+          ))}
 
         {/* Render path popup */}
         {selectedPathDetails && !isPathEditMode && (

@@ -16,10 +16,18 @@ export interface MarkerData {
   tags: string[];
 }
 
+export type PinData = {
+  id: string;
+  lat: number;
+  lng: number;
+  name: string;
+  createdBy: string;
+};
+
 export interface PathData {
   id: string;
   name: string;
-  markers: string[];
+  pins: string[];
   memory: string;
   year: number;
   classYear: string;

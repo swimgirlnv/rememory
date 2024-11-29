@@ -2,15 +2,16 @@
 import React, { useState, useEffect } from "react";
 import InteractiveMap from "./InteractiveMap";
 import ControlPanel from "./ControlPanel"; // Import Control Panel
-import { MarkerData, PathData, MediaItem } from "../data/types";
+import { MarkerData, PathData, MediaItem, PinData } from "../data/types";
 import { collection, addDoc, updateDoc, doc, deleteDoc, onSnapshot } from "firebase/firestore";
 import { v4 as uuidv4 } from "uuid";
-import EditModal from "./EditModal";
 import AboutModal from "./AboutModal";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import RightPanel from "./RightPanel";
 import ViewDetailsModal from "./ViewDetails";
 import { db } from "../../firebaseConfig";
+import EditPathModal from "./EditPathModal";
+import EditMarkerModal from "./EditMarkerModal";
 
 const MapContainer: React.FC = () => {
   const [selectedDetails, setSelectedDetails] = useState<{
@@ -27,16 +28,23 @@ const MapContainer: React.FC = () => {
   const [isEditingMode, setIsEditingMode] = useState(false);
   const [isPathEditMode, setIsPathEditMode] = useState(false);
   const [markers, setMarkers] = useState<MarkerData[]>([]);
+  const [pins] = useState<PinData[]>([]);
   const [paths, setPaths] = useState<PathData[]>([]);
   const [filteredMarkers, setFilteredMarkers] = useState<MarkerData[]>([]);
   const [filteredPaths, setFilteredPaths] = useState<PathData[]>([]);
   const [selectedMarkers, setSelectedMarkers] = useState<string[]>([]);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<{ type: "marker" | "path"; id: string } | null>(null);
+  const [selectedPins, setSelectedPins] = useState<string[]>([]);
+  const [isMarkerEditModalOpen, setIsMarkerEditModalOpen] = useState(false);
+  const [isPathEditModalOpen, setIsPathEditModalOpen] = useState(false);
   const [viewMode] = useState<"markers" | "paths" | "both">("both");
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [mapBounds, setMapBounds] = useState<{ north: number; south: number; east: number; west: number } | undefined>(undefined);
+
+  const [editingMarker, setEditingMarker] = useState<MarkerData | null>(null);
+  const [editingPath, setEditingPath] = useState<PathData | null>(null);
+
+  console.log(selectedMarkers);
 
   const handleBoundsChange = (bounds: { north: number; south: number; east: number; west: number }) => {
     setMapBounds(bounds);
@@ -75,12 +83,13 @@ const MapContainer: React.FC = () => {
       const updatedPaths = snapshot.docs.map((doc) => ({
         id: doc.id,
         name: doc.data().name || "Unnamed Path",
-        markers: doc.data().markers || [],
+        pins: doc.data().pins || [],
         memory: doc.data().memory || "",
         year: doc.data().year || new Date().getFullYear(),
         classYear: doc.data().classYear || "",
         media: doc.data().media || [],
         createdBy: doc.data().createdBy,
+        tags: doc.data().tags || [],
       }));
       setPaths(updatedPaths as PathData[]);
     });
@@ -127,38 +136,33 @@ const MapContainer: React.FC = () => {
   const togglePathEditMode = () => {
     setIsPathEditMode((prev) => !prev);
     if (!isPathEditMode) {
-      setSelectedMarkers([]); // Clear selected markers when exiting Path Edit Mode
+      setSelectedPins([]); // Clear selected markers when exiting Path Edit Mode
     }
   };
 
   // Create Path
   const handleCreatePath = async () => {
-    if (selectedMarkers.length < 2) {
-      alert("Please select at least two markers to create a path.");
+    if (selectedPins.length < 2) {
+      alert("Please select at least two pins to create a path.");
       return;
     }
   
+    const newPath: PathData = {
+      id: uuidv4(),
+      pins: selectedPins,
+      name: `Path with ${selectedPins.length} Pins`,
+      memory: "",
+      year: new Date().getFullYear(),
+      classYear: "",
+      media: [],
+      createdBy: currentUser.uid,
+      tags: [],
+    };
+  
     try {
-      if (!currentUser) {
-        console.error("User is not logged in!");
-        return;
-      }
-  
-      const newPath: PathData = {
-        id: uuidv4(),
-        markers: selectedMarkers,
-        name: `Path with ${selectedMarkers.length} Markers`,
-        memory: "",
-        year: new Date().getFullYear(),
-        classYear: "",
-        media: [],
-        createdBy: currentUser.uid, // Save the current user's UID
-        tags: [],
-      };
-  
-      const docRef = await addDoc(collection(db, "paths"), newPath);
-      setPaths((prev) => [...prev, { ...newPath, id: docRef.id }]);
-      setSelectedMarkers([]); // Clear selected markers after path creation
+      await addDoc(collection(db, "paths"), newPath);
+      setPaths((prev) => [...prev, newPath]);
+      setSelectedPins([]); // Clear selected pins after creating the path
     } catch (error) {
       console.error("Error creating path:", error);
     }
@@ -216,71 +220,64 @@ const MapContainer: React.FC = () => {
     }
   };
 
-  // Open Edit Modal
-  const openEditModal = (type: "marker" | "path", id: string) => {
-if (!currentUser) {
-    alert("You must be logged in to edit.");
-    return;
-  }
-
-    const item =
-      type === "marker"
-        ? markers.find((m) => m.id === id)
-        : paths.find((p) => p.id === id);
-  
-    if (item && canEdit(item)) {
-      setEditingItem({ type, id });
-      setIsEditModalOpen(true);
+  const openMarkerEditModal = (id: string) => {
+    const marker = markers.find((m) => m.id === id);
+    if (marker && canEdit(marker)) {
+      setEditingMarker(marker);
+      setIsMarkerEditModalOpen(true);
     } else {
-      alert("You do not have permission to edit this item.");
+      alert("You do not have permission to edit this marker.");
     }
   };
 
-  // Save Edits
-  const handleSaveEdit = async (updatedData: {
-    name: string;
-    memory: string;
-    media: MediaItem[];
-    classYear: string;
-    year: number;
-    tags: string[];
-  }) => {
-    if (!editingItem) return;
+  const openPathEditModal = (id: string) => {
+    const path = paths.find((p) => p.id === id);
+    if (path && canEdit(path)) {
+      setEditingPath(path);
+      setIsPathEditModalOpen(true);
+    } else {
+      alert("You do not have permission to edit this path.");
+    }
+  };
+
   
-    const { type, id } = editingItem;
-  
+  const handleSaveMarkerEdit = async (updatedData: { name: string; memory: string; media: MediaItem[]; classYear: string; year: number; createdBy: string; tags: string[]; }) => {
+    if (!editingMarker) return;
+    const updatedMarker: MarkerData = { ...editingMarker, ...updatedData };
     try {
-      const docRef = doc(db, type === "marker" ? "markers" : "paths", id);
-  
-      const sanitizedData = {
-        name: updatedData.name,
-        memory: updatedData.memory,
-        media: updatedData.media || [],
-        classYear: updatedData.classYear,
-        year: updatedData.year,
-        tags: updatedData.tags,
-      };
-  
-      await updateDoc(docRef, sanitizedData);
-  
-      // Update local state after Firestore update
-      if (type === "marker") {
-        setMarkers((prev) =>
-          prev.map((marker) =>
-            marker.id === id ? { ...marker, ...sanitizedData } : marker
-          )
-        );
-      } else {
-        setPaths((prev) =>
-          prev.map((path) =>
-            path.id === id ? { ...path, ...sanitizedData } : path
-          )
-        );
-      }
-  
-      setIsEditModalOpen(false); // Close modal after save
+      const docRef = doc(db, "markers", updatedMarker.id);
+      await updateDoc(docRef, { ...updatedMarker });
+
+      setMarkers((prev) =>
+        prev.map((marker) =>
+          marker.id === updatedMarker.id ? updatedMarker : marker
+        )
+      );
+
+      setEditingMarker(null);
+      setIsMarkerEditModalOpen(false);
     } catch (error) {
-      console.error(`Error updating ${type}:`, error);
+      console.error("Error saving marker:", error);
+    }
+  };
+
+  const handleSavePathEdit = async (updatedData: { name: string; memory: string; media: MediaItem[]; classYear: string; year: number; createdBy: string; tags: string[]; pins: string[]; }) => {
+    if (!editingPath) return;
+    const updatedPath: PathData = { ...editingPath, ...updatedData };
+    try {
+      const docRef = doc(db, "paths", updatedPath.id);
+      await updateDoc(docRef, { ...updatedPath });
+
+      setPaths((prev) =>
+        prev.map((path) =>
+          path.id === updatedPath.id ? updatedPath : path
+        )
+      );
+
+      setEditingPath(null);
+      setIsPathEditModalOpen(false);
+    } catch (error) {
+      console.error("Error saving path:", error);
     }
   };
 
@@ -303,6 +300,56 @@ if (!currentUser) {
     setFilteredMarkers(filteredMarkers);
     setFilteredPaths(filteredPaths);
   };
+  
+  function getDefaultPathData(path: PathData | null): {
+    id: string;
+    name: string;
+    memory: string;
+    media: MediaItem[];
+    classYear: string;
+    year: number;
+    createdBy: string;
+    tags: string[];
+    pins: string[];
+  } | null {
+    if (!path) return null;
+  
+    return {
+      id: path.id || "unknown-id",
+      name: path.name || "Unnamed Path",
+      memory: path.memory || "",
+      media: path.media || [],
+      classYear: path.classYear || "--",
+      year: path.year || new Date().getFullYear(),
+      createdBy: path.createdBy || "unknown-creator",
+      tags: path.tags || [],
+      pins: path.pins || [],
+    };
+  }
+
+  function getDefaultMarkerData(marker: MarkerData | null): {
+    id: string;
+    name: string;
+    memory: string;
+    media: MediaItem[];
+    classYear: string;
+    year: number;
+    createdBy: string;
+    tags: string[];
+  } | null {
+    if (!marker) return null;
+  
+    return {
+      id: marker.id || "unknown-id",
+      name: marker.name || "Unnamed Marker",
+      memory: marker.memory || "",
+      media: marker.media || [],
+      classYear: marker.classYear || "--",
+      year: marker.year || new Date().getFullYear(),
+      createdBy: marker.createdBy || "unknown-creator",
+      tags: marker.tags || [],
+    };
+  }
 
   return (
     <div>
@@ -310,7 +357,8 @@ if (!currentUser) {
         <ControlPanel
           isEditingMode={isEditingMode}
           isPathEditMode={isPathEditMode}
-          selectedMarkers={selectedMarkers}
+          selectedPins={selectedPins}
+          pins={pins}
           markers={markers}
           onFilter={handleFilter}
           onEditModeToggle={toggleEditingMode}
@@ -321,16 +369,17 @@ if (!currentUser) {
         <InteractiveMap
           isEditingMode={isEditingMode}
           isPathEditMode={isPathEditMode}
+          viewMode={viewMode}
           markers={viewMode === "paths" ? [] : filteredMarkers}
           paths={viewMode === "markers" ? [] : filteredPaths}
-          selectedMarkers={selectedMarkers}
-          setSelectedMarkers={setSelectedMarkers}
+          selectedPins={selectedPins}
+          setSelectedPins={setSelectedPins}
           onAddMarker={handleAddMarker}
           onDeleteMarker={deleteMarker}
           onAddPath={(newPath) => setPaths((prev) => [...prev, newPath])}
           onDeletePath={deletePath}
-          onEditMarker={(markerId) => openEditModal("marker", markerId)}
-          onEditPath={(pathId) => openEditModal("path", pathId)}
+          onEditMarker={(markerId) => openMarkerEditModal(markerId)}
+          onEditPath={(pathId) => openPathEditModal(pathId)}
           currentUser={currentUser}
           onBoundsChange={handleBoundsChange}
         />
@@ -348,36 +397,22 @@ if (!currentUser) {
           mapBounds={mapBounds} // Pass map bounds for filtering
         />
       </div>
-      <EditModal
-        key={editingItem?.id}
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        onSave={handleSaveEdit}
-        data={
-          editingItem
-            ? editingItem.type === "marker"
-              ? {
-                  id: markers.find((m) => m.id === editingItem.id)?.id || "unknown-id",
-                  name: markers.find((m) => m.id === editingItem.id)?.name || "Unnamed Marker",
-                  memory: markers.find((m) => m.id === editingItem.id)?.memory || "",
-                  media: markers.find((m) => m.id === editingItem.id)?.media || [], // Default to an empty array
-                  classYear: markers.find((m) => m.id === editingItem.id)?.classYear || "Unknown Class Year",
-                  year: markers.find((m) => m.id === editingItem.id)?.year || new Date().getFullYear(),
-                  createdBy: markers.find((m) => m.id === editingItem.id)?.createdBy || "",
-                  tags: markers.find((m) => m.id === editingItem.id)?.tags || [],
-                }
-              : {
-                  id: paths.find((p) => p.id === editingItem.id)?.id || "unknown-id",
-                  name: paths.find((p) => p.id === editingItem.id)?.name || "Unnamed Path",
-                  memory: paths.find((p) => p.id === editingItem.id)?.memory || "",
-                  media: paths.find((p) => p.id === editingItem.id)?.media || [], // Default to an empty array
-                  classYear: paths.find((p) => p.id === editingItem.id)?.classYear || "Unknown Class Year",
-                  year: paths.find((p) => p.id === editingItem.id)?.year || new Date().getFullYear(),
-                  createdBy: paths.find((p) => p.id === editingItem.id)?.createdBy || "",
-                  tags: paths.find((p) => p.id === editingItem.id)?.tags || [],
-                }
-            : null
-        }
+      {/* Edit Marker Modal */}
+      <EditMarkerModal
+        isOpen={isMarkerEditModalOpen}
+        onClose={() => setIsMarkerEditModalOpen(false)}
+        onSave={handleSaveMarkerEdit}
+        onDelete={() => deleteMarker(editingMarker?.id || "")}
+        data={getDefaultMarkerData(editingMarker)}
+      />
+
+      {/* Edit Path Modal */}
+      <EditPathModal
+        isOpen={isPathEditModalOpen}
+        onClose={() => setIsPathEditModalOpen(false)}
+        onSave={handleSavePathEdit}
+        onDelete={() => deletePath(editingPath?.id || "")}
+        data={getDefaultPathData(editingPath)}
       />
       <AboutModal
         isOpen={isAboutModalOpen}
