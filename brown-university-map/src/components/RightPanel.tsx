@@ -4,25 +4,11 @@ import { MarkerData, PathData } from "../data/types";
 const RightPanel: React.FC<{
   markers: MarkerData[];
   paths: PathData[];
-  onMarkerClick: (markerData: {
-    name: string;
-    memory: string;
-    year: number;
-    classYear: string;
-    media: { url: string; type: "image" | "video" | "audio" }[];
-    tags: string[];
-  }) => void;
-  onPathClick: (pathData: {
-    name: string;
-    memory: string;
-    year: number;
-    classYear: string;
-    media: { url: string; type: "image" | "video" | "audio" }[];
-    tags: string[];
-  }) => void;
+  onMarkerClick: (markerData: MarkerData) => void;
+  onPathClick: (pathData: PathData) => void;
   filteredByZoom?: boolean; // Optional filter for zoomed-in pins
   mapBounds?: { north: number; south: number; east: number; west: number }; // Optional map bounds
-}> = ({ markers, paths, onMarkerClick, onPathClick, filteredByZoom, mapBounds }) => {
+}> = ({ markers, paths, onMarkerClick, onPathClick, mapBounds }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedTags, setExpandedTags] = useState<Record<string, boolean>>({});
 
@@ -38,24 +24,26 @@ const RightPanel: React.FC<{
   }, {});
 
   // Filter markers by search term and map bounds (if applicable)
-  const filteredMarkers = markers.filter((marker) => {
-    const matchesSearch = marker.name.toLowerCase().includes(searchTerm.toLowerCase());
-    if (!filteredByZoom || !mapBounds) return matchesSearch;
-  
+  const markersOutsideBounds = markers.filter((marker) => {
     const inBounds =
+      mapBounds &&
       marker.lat >= mapBounds.south &&
       marker.lat <= mapBounds.north &&
       marker.lng >= mapBounds.west &&
       marker.lng <= mapBounds.east;
   
-    return matchesSearch && inBounds;
+    return !inBounds; // Only show markers outside the bounds
   });
 
-  // Filter paths similarly
+  // Filter markers by search term and those outside bounds
+  const filteredMarkers = markersOutsideBounds.filter((marker) =>
+    marker.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Filter paths by search term
   const filteredPaths = paths.filter((path) =>
     path.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
   const toggleTagExpansion = (tag: string) => {
     setExpandedTags((prev) => ({
       ...prev,
@@ -71,7 +59,7 @@ const RightPanel: React.FC<{
       <div className="search-bar">
         <input
           type="text"
-          placeholder="Search pins, pathways, or tags..."
+          placeholder="Search hidden pins..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
@@ -85,7 +73,7 @@ const RightPanel: React.FC<{
         ) : (
           <ul>
             {Object.entries(groupedByTags).map(([tag, markers]) => (
-              <li key={tag}>
+              <li key={tag} style={{fontSize:'.8rem'}}>
                 <div
                   className="tag-header"
                   onClick={() => toggleTagExpansion(tag)}
@@ -94,19 +82,12 @@ const RightPanel: React.FC<{
                   {expandedTags[tag] ? "▼" : "▶"} {tag}
                 </div>
                 {expandedTags[tag] && (
-                  <ul className="tag-items">
+                  <ul style={{fontSize:'.6rem'}}>
                     {markers.map((marker) => (
                       <li
                         key={marker.id}
                         onClick={() =>
-                          onMarkerClick({
-                            name: marker.name || "Unnamed Marker",
-                            memory: marker.memory || "",
-                            year: marker.year,
-                            classYear: marker.classYear || "Unknown Class Year",
-                            media: marker.media || [],
-                            tags: marker.tags || [],
-                          })
+                          onMarkerClick(marker)
                         }
                       >
                         {marker.name || "Unnamed Marker"}
@@ -122,25 +103,17 @@ const RightPanel: React.FC<{
 
       {/* Pins List */}
       <div className="list-section">
-        <h4>All Pins</h4>
+        <h4>Hidden Pins</h4>
         <ul>
-          {filteredMarkers.map((marker) => (
-            <li
-              key={marker.id}
-              onClick={() =>
-                onMarkerClick({
-                    name: marker.name || "Unnamed Marker",
-                    memory: marker.memory || "",
-                    year: marker.year,
-                    classYear: marker.classYear || "Unknown Class Year",
-                    media: marker.media || [],
-                    tags: marker.tags || [],
-                })
-              }
-            >
-              {marker.name || "Unnamed Marker"}
-            </li>
-          ))}
+        {filteredMarkers.map((marker) => (
+          <li
+            key={marker.id}
+            onClick={() => onMarkerClick(marker)}
+            style={{ fontSize: ".8rem", cursor: "pointer" }}
+          >
+            {marker.name || "Unnamed Marker"}
+          </li>
+        ))}
         </ul>
       </div>
 
@@ -152,15 +125,9 @@ const RightPanel: React.FC<{
             <li
               key={path.id}
               onClick={() =>
-                onPathClick({
-                    name: path.name || "Unnamed Path",
-                    memory: path.memory || "",
-                    year: path.year,
-                    classYear: path.classYear || "Unknown Class Year",
-                    media: path.media || [],
-                    tags: path.tags || [],
-                })
+                onPathClick(path)
               }
+              style={{fontSize:'.8rem'}}
             >
               {path.name || "Unnamed Path"}
             </li>

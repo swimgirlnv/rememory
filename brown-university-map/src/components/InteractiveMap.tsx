@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents, useMap } from "react-leaflet";
 import { LatLngExpression } from "leaflet";
 import { MarkerData, PathData, PinData } from "../data/types";
 import { v4 as uuidv4 } from "uuid";
@@ -8,6 +8,21 @@ import ViewDetailsModal from "./ViewDetails";
 import GeoSearch from "./GeoSearch";
 import { addDoc, collection, deleteDoc, doc, onSnapshot } from "firebase/firestore";
 import { db } from "../../firebaseConfig";
+
+
+// Helper component to pan and zoom
+const PanToMarker = ({ lat, lng }: { lat: number; lng: number }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (lat && lng) {
+      map.setView([lat, lng], 15); // Pan to the marker and adjust the zoom level
+    }
+  }, [lat, lng, map]);
+
+  return null;
+};
+
 
 const InteractiveMap: React.FC<{
   isEditingMode: boolean;
@@ -25,6 +40,7 @@ const InteractiveMap: React.FC<{
   onEditMarker: (markerId: string) => void;
   currentUser: { uid: string; email: string };
   onBoundsChange: (bounds: { north: number; south: number; east: number; west: number }) => void;
+  panTo: { lat: number; lng: number } | null;
 }> = ({
   isEditingMode,
   isPathEditMode,
@@ -39,6 +55,7 @@ const InteractiveMap: React.FC<{
   onEditMarker,
   currentUser,
   onBoundsChange,
+  panTo,
 }) => {
 
   useEffect(() => {
@@ -77,6 +94,7 @@ const InteractiveMap: React.FC<{
         });
       },
     });
+  
     return null;
   };
 
@@ -237,6 +255,8 @@ const InteractiveMap: React.FC<{
         <MapEventsHandler />
         <GeoSearch />
         <MapClickHandler />
+
+        {panTo && <PanToMarker lat={panTo.lat} lng={panTo.lng} />}
 
         {/* Render existing markers */}
         {!isPathEditMode && markers.map((marker) => (

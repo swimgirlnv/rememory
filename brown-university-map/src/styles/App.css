@@ -279,7 +279,7 @@ button.save:hover {
   margin-left: 0.5em;
   background: none;
   border: none;
-  font-size: 1em;
+  font-size: .7em;
   cursor: pointer;
 }
 
@@ -306,6 +306,6 @@ button.save:hover {
   background-color: #f0f0f0;
   border-radius: 5px;
   padding: 5px 10px;
-  font-size: 0.9em;
+  font-size: 0.8em;
   color: #333;
 }

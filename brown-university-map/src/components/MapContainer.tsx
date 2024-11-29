@@ -40,7 +40,7 @@ const MapContainer: React.FC = () => {
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [mapBounds, setMapBounds] = useState<{ north: number; south: number; east: number; west: number } | undefined>(undefined);
-
+  const [panTo, setPanTo] = useState<{ lat: number; lng: number } | null>(null); // New state
   const [editingMarker, setEditingMarker] = useState<MarkerData | null>(null);
   const [editingPath, setEditingPath] = useState<PathData | null>(null);
 
@@ -351,6 +351,10 @@ const MapContainer: React.FC = () => {
     };
   }
 
+  const handleMarkerClick = (marker: MarkerData) => {
+    setPanTo({ lat: marker.lat, lng: marker.lng }); // Set coordinates to pan to
+  };
+
   return (
     <div>
       <div className="testing-map">
@@ -382,16 +386,25 @@ const MapContainer: React.FC = () => {
           onEditPath={(pathId) => openPathEditModal(pathId)}
           currentUser={currentUser}
           onBoundsChange={handleBoundsChange}
+          panTo={panTo}
         />
         {/* Right-side list panel */}
         <RightPanel
           markers={markers}
           paths={paths}
-          onMarkerClick={(markerData) =>
-            setSelectedDetails({ type: "marker", data: markerData })
+          onMarkerClick={(markerData) => {
+            setSelectedDetails({
+              type: "marker",
+              data: {
+                ...markerData,
+                media: markerData.media || [],
+              },
+            })
+            handleMarkerClick(markerData)
+          }
           }
           onPathClick={(pathData) =>
-            setSelectedDetails({ type: "path", data: pathData })
+            setSelectedDetails({ type: "path", data: { ...pathData, media: pathData.media || [] } })
           }
           filteredByZoom={true} // Enable filtering by zoom
           mapBounds={mapBounds} // Pass map bounds for filtering
