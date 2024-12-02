@@ -157,6 +157,8 @@ const MapContainer: React.FC = () => {
       media: [],
       createdBy: currentUser.uid,
       tags: [],
+      status: "approved",
+      dismissedBy: [],
     };
   
     try {

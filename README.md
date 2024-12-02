@@ -50,21 +50,6 @@ This project could evolve into a toolkit for communities beyond the university, 
 - Public Map and Private Map: A user can switch between a public and private map and the markers/paths are able to be toggled as public+private or private.
 
 
-1. Tags + Shared Memories
-
-a. Suggested Tags in Edit Modal
-
-	•	Feature: Use existing memory content to suggest tags and allow users to select or create tags.
-	•	Implementation:
-	•	Continue refining the tag suggestion logic already added.
-	•	Save the selected tags into Firestore under each memory.
-
-b. Right Side Panel with Tags
-
-	•	Feature: Sort memories into tag-based folders in the right panel. Clicking a tag shows all associated memories.
-	•	Implementation:
-	•	Add collapsible folders in the right panel for each tag.
-	•	When a memory is clicked, the modal opens, and the map zooms to the memory location.
 
 c. Shared Memory Marker
 
@@ -74,34 +59,6 @@ c. Shared Memory Marker
 	•	Clicking on the marker shows a web of connected memories, possibly with lines or visual links between them.
 	•	Add functionality to create these markers based on shared tags.
 
-2. Zoom Adjustments
-
-a. Pins Adjust to Map Zoom
-
-	•	Feature: Adjust the list of visible pins in the right panel based on the current map view.
-	•	Implementation:
-	•	Use Leaflet’s onZoomEnd and onMoveEnd events to detect map changes.
-	•	Filter pins in the right panel based on their visibility on the map.
-
-b. Paths Visible Only When Relevant
-
-	•	Feature: Some paths become visible only when certain markers are clicked.
-	•	Implementation:
-	•	Add a visible property to paths and toggle visibility based on marker interactions.
-
-3. Improved Path and Marker Interaction
-
-a. Clicking a Path Zooms Between Locations
-
-	•	Feature: Clicking on a path zooms the map between its markers.
-	•	Implementation:
-	•	Use Leaflet’s fitBounds method to adjust the map view to show all markers in the path.
-
-b. New Marker Type for Paths
-
-	•	Feature: Add a specific marker type to represent path-related markers.
-	•	Implementation:
-	•	Introduce a “Path Marker” that visually differentiates markers that are part of paths.
 
 4. Moderation Features
 
@@ -149,23 +106,3 @@ b. Toggle Visibility of Content
 	•	Implementation:
 	•	Add a visibility field to markers and paths.
 	•	Use this field to determine which content is shown in each map mode.
-
-7. Navigation Through Pins and Paths
-
-a. Navigate Pins with Arrows
-
-	•	Feature: Add arrows to navigate through pins in the right panel or modal.
-	•	Implementation:
-	•	Maintain a current index in the pin list and update it with arrow key interactions.
-
-Prioritizing Features
-
-	•	First Milestone:
-	•	Tags in edit modal, shared memories, and tag-based folders.
-	•	Zoom-based pin filtering.
-	•	Public/private map toggle.
-	•	Second Milestone:
-	•	Path-related features (e.g., selective visibility, new marker type).
-	•	Moderation tools (reporting, shadowbanning, approval workflow).
-	•	Third Milestone:
-	•	Enhanced navigation and shared memory visualizations.

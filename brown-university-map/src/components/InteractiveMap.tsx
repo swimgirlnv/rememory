@@ -131,6 +131,8 @@ const InteractiveMap: React.FC<{
             media: [],
             createdBy: currentUser.uid,
             tags: [],
+            status: "approved",
+            dismissedBy: [],
           });
         }
       },

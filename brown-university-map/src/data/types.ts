@@ -14,6 +14,8 @@ export interface MarkerData {
   media?: MediaItem[]; // Unified media array
   createdBy: string;
   tags: string[];
+  status: "approved" | "pending" | "rejected";
+  dismissedBy: string[];
 }
 
 export type PinData = {
@@ -34,4 +36,6 @@ export interface PathData {
   media?: MediaItem[]; // Unified media array
   createdBy: string;
   tags: string[];
+  status: "approved" | "pending" | "rejected";
+  dismissedBy: string[];
 }

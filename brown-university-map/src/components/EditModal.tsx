@@ -55,6 +55,7 @@ const EditModal: React.FC<{
     "Grad Year 4",
     "Grad Year 5",
     "Alumni",
+    "Faculty",
   ];
 
   useEffect(() => {

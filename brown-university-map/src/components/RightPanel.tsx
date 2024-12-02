@@ -11,6 +11,8 @@ const RightPanel: React.FC<{
 }> = ({ markers, paths, onMarkerClick, onPathClick, mapBounds }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedTags, setExpandedTags] = useState<Record<string, boolean>>({});
+  const approvedMarkers = markers.filter((marker) => marker.status === "approved");
+  const approvedPaths = paths.filter((path) => path.status === "approved");
 
   // Group markers by tags
   const groupedByTags = markers.reduce((acc: Record<string, MarkerData[]>, marker) => {
@@ -24,7 +26,7 @@ const RightPanel: React.FC<{
   }, {});
 
   // Filter markers by search term and map bounds (if applicable)
-  const markersOutsideBounds = markers.filter((marker) => {
+  const markersOutsideBounds = approvedMarkers.filter((marker) => {
     const inBounds =
       mapBounds &&
       marker.lat >= mapBounds.south &&
@@ -41,7 +43,7 @@ const RightPanel: React.FC<{
   );
 
   // Filter paths by search term
-  const filteredPaths = paths.filter((path) =>
+  const filteredPaths = approvedPaths.filter((path) =>
     path.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
   const toggleTagExpansion = (tag: string) => {
