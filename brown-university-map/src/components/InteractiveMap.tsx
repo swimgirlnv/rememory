@@ -152,6 +152,7 @@ const InteractiveMap: React.FC<{
       "Grad Year 3": { start: "#a37575", end: "#8b4513" }, // Darker RosyBrown to SaddleBrown
       "Grad Year 4": { start: "#8b4513", end: "#3c2f2f" }, // SaddleBrown to VeryDarkBrown
       "Grad Year 5": { start: "#5c4033", end: "#2c1f1f" }, // DarkBrown to VeryVeryDarkBrown
+      "Faculty": { start: "#2c1f1f", end: "#8b4513" }, // Darker Sienna to DarkBrown
       Default: { start: "#8b4513", end: "#5c4033" }, // Default: Darker Sienna to DarkBrown
     };
   

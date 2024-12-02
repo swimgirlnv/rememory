@@ -52,7 +52,7 @@ console.log(createdBy);
     "Grad Year 3",
     "Grad Year 4",
     "Grad Year 5",
-    "Alumni"];
+    "Alumni", "Faculty",];
 
     useEffect(() => {
         if (data) {
