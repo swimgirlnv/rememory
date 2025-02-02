@@ -4,6 +4,7 @@ import { MediaItem } from "../data/types";
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { addDoc, collection, doc, getDocs, updateDoc } from "firebase/firestore";
 import { db } from "../../firebaseConfig";
+import { scanContentForModeration } from "./moderation"; /** ADDED HERE */
 
 const EditMarkerModal: React.FC<{
   isOpen: boolean;
@@ -120,9 +121,15 @@ console.log(createdBy);
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!data?.id || !data.createdBy) {
       console.error("Missing required fields: id or createdBy");
+      return;
+    }
+
+    const moderationResult = await scanContentForModeration(memory);
+    if (moderationResult.flagged) {
+      alert(`Your content was flagged for moderation. Reasons: ${moderationResult.reasons?.join(", ")}`);
       return;
     }
   

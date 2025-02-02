@@ -106,3 +106,6 @@ b. Toggle Visibility of Content
 	•	Implementation:
 	•	Add a visibility field to markers and paths.
 	•	Use this field to determine which content is shown in each map mode.
+
+
+7. Add (horz scrollable?) tabs along the top for public vs private? have an option to create and share a map with friends, scrollable like imessage?

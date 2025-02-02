@@ -1,6 +1,6 @@
 [
   {
-    "origin": ["https://rememory-one.vercel.app", "https://localhost:5173"],
+    "origin": ["https://rememory-one.vercel.app/", "https://localhost:5173"],
     "method": ["GET", "POST", "PUT", "DELETE"],
     "responseHeader": ["Content-Type", "Authorization"],
     "maxAgeSeconds": 3600
