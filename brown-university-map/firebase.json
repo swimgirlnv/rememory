@@ -17,9 +17,8 @@
         "firebase-debug.*.log",
         "*.local"
       ],
-      "predeploy": [
-        "npm --prefix \"$RESOURCE_DIR\" run build"
-      ]
+      "timeoutSeconds": 120,
+      "memory": "256MB"
     }
   ]
 }

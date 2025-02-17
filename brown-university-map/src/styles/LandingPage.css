@@ -1,0 +1,57 @@
+.landing-page {
+    background: #F4E4C1; /* Beige */
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    position: relative;
+}
+
+.landing-page::after {
+    content: "";
+    background: url("https://cdn11.bigcommerce.com/s-5luen2shhj/images/stencil/3000x3000/products/159/26279/mercator_phys_tanworld_mural_lg__87760__04011.1709579062.jpg?c=2");
+    background-size: cover;
+    background-position: center;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -1;
+    opacity: .5;
+}
+
+/* Text styles */
+.title {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #4E3629; /* Dark Brown */
+    text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.2); /* Subtle shadow for readability */
+}
+
+.subtitle {
+    font-size: 1.2rem;
+    color: #8B6F61; /* Light Brown */
+    margin: 10px 0;
+}
+
+/* Button styles */
+.sign-in-button {
+    background-color: #C8102E; /* Cardinal Red */
+    color: #F4E4C1; /* Beige */
+    border: none;
+    padding: 12px 20px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.sign-in-button:hover {
+    background-color: #A30E24; /* Slightly darker red */
+}

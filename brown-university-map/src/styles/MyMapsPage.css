@@ -1,0 +1,211 @@
+.my-maps-page {
+  padding: 20px;
+  max-width: 900px;
+  margin: 0 auto;
+  text-align: center;
+  font-family: Arial, sans-serif;
+  min-height: 100vh;
+}
+
+/* Page Header */
+h1 {
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+  color: #4e3629;
+}
+
+/* Tabs for Filtering */
+.map-filter-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.map-filter-tabs button {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  background-color: #a30e24;
+  color: white;
+  transition: background-color 0.3s ease;
+}
+
+.map-filter-tabs button.active {
+  background-color: #c8102e;
+}
+
+.map-filter-tabs button:hover {
+  background-color: #8a1e20;
+}
+
+/* Sorting Dropdown */
+.sort-section {
+  margin-bottom: 20px;
+}
+
+.sort-section label {
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.sort-section select {
+  padding: 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* Add New Map Section */
+.add-map-section {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+.add-map-section input {
+  padding: 8px;
+  width: 300px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.add-map-button {
+  padding: 8px 16px;
+  background-color: #4e3629;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.add-map-button:hover {
+  background-color: #6b4f3f;
+}
+
+.add-map-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* Map List */
+.map-list {
+  margin-top: 20px;
+}
+
+/* Individual Map Item */
+.map-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #f4e4c1;
+  padding: 12px;
+  margin: 10px 0;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease-in-out;
+}
+
+.map-item:hover {
+  transform: translateY(-3px);
+}
+
+.map-button {
+  width: 100%;
+  padding: 10px;
+  background-color: #c8102e;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  margin-bottom: 6px;
+  transition: background-color 0.3s ease;
+}
+
+.map-button:hover {
+  background-color: #8a1e20;
+}
+
+.map-description {
+  font-size: 0.9rem;
+  color: #5c4033;
+  margin-bottom: 6px;
+  text-align: center;
+}
+
+.map-visibility {
+  font-size: 0.85rem;
+  font-style: italic;
+  color: #6b4f3f;
+}
+
+/* Share & Delete Buttons */
+.share-map-button,
+.delete-map-button {
+  padding: 8px;
+  margin: 4px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.share-map-button {
+  background-color: #0077cc;
+  color: white;
+}
+
+.share-map-button:hover {
+  background-color: #005fa3;
+}
+
+.delete-map-button {
+  background-color: #a30e24;
+  color: white;
+}
+
+.delete-map-button:hover {
+  background-color: #8a1e20;
+}
+
+/* No Maps Message */
+.no-maps-message {
+  font-size: 1.2rem;
+  color: #8b6f61;
+  margin-top: 20px;
+  font-style: italic;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+  .add-map-section {
+      flex-direction: column;
+      gap: 8px;
+  }
+
+  .map-filter-tabs {
+      flex-direction: column;
+      gap: 6px;
+  }
+
+  .map-button {
+      width: auto;
+      padding: 8px 12px;
+  }
+
+  .map-item {
+      padding: 10px;
+  }
+
+  .sort-section {
+      text-align: center;
+  }
+}

@@ -16,16 +16,6 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-a {
-  font-weight: 500;
-  color: #B5651D; /* Warm orange-brown */
-  text-decoration: inherit;
-}
-
-a:hover {
-  color: #8B4513; /* SaddleBrown hover effect */
-}
-
 body {
   margin: 0;
   display: flex;
@@ -42,8 +32,6 @@ h1 {
 }
 
 button {
-  background-color: rgb(217, 180, 83); /* SaddleBrown */
-  color: white;
   border: none;
   padding: 10px;
   border-radius: 8px;
@@ -52,30 +40,4 @@ button {
   font-size: .8rem;
   transition: background-color 0.3s ease;
   font-family: 'Graduate', sans-serif;
-}
-
-button:hover {
-  background-color: #5C4033; /* Slightly darker brown */
-}
-
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #4B2E22;
-    background-color: #F6EFE9;
-  }
-  a:hover {
-    color: #8B4513;
-  }
-  button {
-    background-color: #B5651D; /* Lighter orange-brown for light mode */
-  }
-}
-
-p {
-  font-size: .8em;
 }

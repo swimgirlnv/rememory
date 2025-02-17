@@ -41,6 +41,7 @@ const InteractiveMap: React.FC<{
   currentUser: { uid: string; email: string };
   onBoundsChange: (bounds: { north: number; south: number; east: number; west: number }) => void;
   panTo: { lat: number; lng: number } | null;
+  mapId: string;
 }> = ({
   isEditingMode,
   isPathEditMode,
@@ -56,22 +57,27 @@ const InteractiveMap: React.FC<{
   currentUser,
   onBoundsChange,
   panTo,
+  mapId,
 }) => {
 
   useEffect(() => {
-    const unsubscribePins = onSnapshot(collection(db, "pins"), (snapshot) => {
-      const updatedPins = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        lat: doc.data().lat,
-        lng: doc.data().lng,
-        name: doc.data().name || "Unnamed Pin",
-        createdBy: doc.data().createdBy,
-      }));
+    // Listen to updates for pins specific to this mapId
+    const pinsRef = collection(db, "pins");
+    const unsubscribePins = onSnapshot(pinsRef, (snapshot) => {
+      const updatedPins = snapshot.docs
+        .filter((doc) => doc.data().mapId === mapId) // Filter by mapId
+        .map((doc) => ({
+          id: doc.id,
+          lat: doc.data().lat,
+          lng: doc.data().lng,
+          name: doc.data().name || "Unnamed Pin",
+          createdBy: doc.data().createdBy,
+        }));
       setPins(updatedPins);
     });
-  
+
     return () => unsubscribePins();
-  }, []);
+  }, [mapId]);
   
   const MapEventsHandler = () => {
     const map = useMapEvents({
@@ -133,6 +139,7 @@ const InteractiveMap: React.FC<{
             tags: [],
             status: "approved",
             dismissedBy: [],
+            reports: []
           });
         }
       },

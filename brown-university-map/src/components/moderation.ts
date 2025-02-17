@@ -1,26 +1,33 @@
-// moderation.ts
+import { getAuth } from "firebase/auth";
 
-export async function scanContentForModeration(content: string): Promise<{ flagged: boolean; reasons?: string[] }> {
-    try {
-      const response = await fetch('/api/moderation', { // Adjust this endpoint as needed
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ content })
-      });
-  
-      if (!response.ok) {
-        console.error('Moderation API request failed', response.statusText);
-        return { flagged: true, reasons: ['Moderation request failed. Please try again.'] };
-      }
-  
-      const result = await response.json();
-      return result.flagged ? { flagged: true, reasons: result.reasons || [] } : { flagged: false };
-  
-    } catch (error) {
-      console.error('Error scanning content for moderation:', error);
-      return { flagged: true, reasons: ['An error occurred while processing your request.'] };
-    }
+export async function scanContentForModeration(content: string) {
+  const auth = getAuth();
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error("User not authenticated");
   }
-  
+
+  // Get the Firebase authentication token
+  const token = await user.getIdToken();
+
+  try {
+    const response = await fetch("https://us-central1-rememory-88da9.cloudfunctions.net/moderationAPI", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}` // 🔥 Send Firebase token
+      },
+      body: JSON.stringify({ content }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error scanning content for moderation:", error);
+    return { flagged: false };
+  }
+}

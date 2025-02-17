@@ -1,0 +1,77 @@
+/* Right Panel */
+.right-panel h2 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    color: #4E3629;
+}
+
+.search-bar input {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    border: 2px solid #8B6F61; /* Light Brown */
+    border-radius: 8px;
+    outline: none;
+    margin-bottom: 20px;
+    box-sizing: border-box;
+}
+
+.search-bar input:focus {
+    border-color: #C8102E; /* Cardinal Red */
+}
+
+.tags-section, .list-section {
+    margin-bottom: 20px;
+}
+
+.tags-section h4, .list-section h4 {
+    font-size: 1.1rem;
+    color: #4E3629;
+    border-bottom: 2px solid #C8102E;
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+}
+
+ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+li {
+    padding: 6px 10px;
+    font-size: 0.9rem;
+    color: #4E3629;
+    background-color: #FFF5E1;
+    border: 1px solid #8B6F61;
+    border-radius: 6px;
+    margin: 4px 0;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+li:hover {
+    background-color: #E5D0B3; /* Slightly darker beige */
+    transform: scale(1.02);
+}
+
+.tag-header {
+    font-size: 1rem;
+    color: #C8102E;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+}
+
+.tag-header:hover {
+    color: #A30E24; /* Darker Red */
+}
+
+.no-tags-message, .no-markers-message {
+    color: #8B6F61;
+    font-size: 0.85rem;
+    text-align: center;
+    margin: 10px 0;
+}

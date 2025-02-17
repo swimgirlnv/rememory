@@ -1,45 +1,57 @@
-// functions/src/index.ts
-import * as functions from 'firebase-functions';
-import * as admin from 'firebase-admin';
-import axios from 'axios';
-import cors from 'cors';
+import * as functions from "firebase-functions";
+import * as admin from "firebase-admin";
+import axios from "axios";
+import cors from "cors";
 
-// Initialize Firebase Admin
 admin.initializeApp();
 
 const corsHandler = cors({ origin: true });
 
-// Cloud Function to handle moderation requests
-export const moderationAPI = functions.https.onRequest((req, res) => {
+export const moderationAPI = functions.https.onRequest(async (req, res) => {
   corsHandler(req, res, async () => {
-    if (req.method !== 'POST') {
-      return res.status(405).send({ message: 'Method Not Allowed' });
+    res.set("Access-Control-Allow-Origin", "*");
+    res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+    res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+    if (req.method === "OPTIONS") {
+      return res.status(204).send();
     }
 
-    const { content } = req.body;
-
-    if (!content) {
-      return res.status(400).send({ message: 'Content is required' });
+    // 🔥 Verify Firebase Auth Token
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ message: "Unauthorized: Missing auth token" });
     }
+
+    const token = authHeader.split("Bearer ")[1];
 
     try {
-      // Replace with your moderation service URL and API key if required
-      const moderationServiceURL = 'https://api.yourmoderationprovider.com/moderate';
-      const apiKey = 'YOUR_API_KEY';
+      const decodedToken = await admin.auth().verifyIdToken(token);
+      console.log(`Authenticated user: ${decodedToken.email}`);
 
-      // Send request to the moderation service
-      const response = await axios.post(moderationServiceURL, { content }, {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
+      const { content } = req.body;
+      if (!content) {
+        return res.status(400).json({ message: "Content is required" });
+      }
+
+      const openaiApiKey = process.env.OPENAI_API_KEY || functions.config().openai.key;
+
+      const response = await axios.post(
+        "https://api.openai.com/v1/moderations",
+        { input: content },
+        {
+          headers: {
+            Authorization: `Bearer ${openaiApiKey}`,
+            "Content-Type": "application/json",
+          },
         }
-      });
+      );
 
-      // Respond with the moderation result
-      res.status(200).send(response.data);
+      const flagged = response.data.results.some((result: any) => result.flagged);
+      return res.status(200).json({ flagged });
     } catch (error: any) {
-      console.error('Moderation API Error:', error);
-      res.status(500).send({ message: 'Internal Server Error', error: error.message });
+      console.error("Moderation API Error:", error.message);
+      return res.status(500).json({ message: "Internal Server Error", error: error.message });
     }
   });
 });

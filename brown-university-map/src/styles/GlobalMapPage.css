@@ -1,0 +1,12 @@
+/* GlobalMapPage.css */
+
+.global-map-page {
+    padding: 20px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+  }
+
+  
