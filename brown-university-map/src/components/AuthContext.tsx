@@ -1,11 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { createContext, useContext, ReactNode, useEffect, useState } from "react";
 import { auth, db } from "../../firebaseConfig";
-import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "firebase/auth";
+import {
+  GoogleAuthProvider,
+  signInWithPopup,
+  onAuthStateChanged,
+  signOut,
+  User,
+} from "firebase/auth";
 import { doc, setDoc, getDoc } from "firebase/firestore";
+import { UserData } from "../data/types";
 
 export type AuthContextType = {
-  currentUser: { uid: string; email: string } | null;
+  currentUser: UserData | null;
   isAdmin: boolean;
   login: () => Promise<void>;
   logout: () => Promise<void>;
@@ -22,61 +29,81 @@ export const useAuth = () => {
 };
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<{ uid: string; email: string } | null>(null);
+  const [currentUser, setCurrentUser] = useState<UserData | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
+  // Admin users list (for manual admin control)
   const adminUsers = [
-    { uid: "user-unique-id", email: "beccaqwaterson@gmail.com" },
     { uid: "owM9kxvXLLadr4lR0KkgifJRJda2", email: "j.r.locke20@gmail.com" },
   ];
 
-  const checkIfAdmin = (user: { uid: string; email: string } | null) => {
+  const checkIfAdmin = (user: UserData | null) => {
     if (!user) return false;
     return adminUsers.some(
-      (admin) => admin.uid === user.uid && admin.email.toLowerCase() === user.email.toLowerCase()
+      (admin) =>
+        admin.uid === user.uid && admin.email.toLowerCase() === user.email.toLowerCase()
     );
   };
 
   // Save or update user data in Firestore
-  const saveUserToFirestore = async (user: { uid: string; email: string }) => {
+  const saveUserToFirestore = async (user: User) => {
     try {
+      if (!user.email) {
+        console.error("User email is missing, cannot save to Firestore.");
+        return;
+      }
+
       const userDocRef = doc(db, "users", user.uid);
       const userDoc = await getDoc(userDocRef);
 
-      if (!userDoc.exists()) {
-        // Save new user data
-        await setDoc(userDocRef, {
+      const userData: UserData = {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName || user.email.split("@")[0], // Default to email prefix if no name
+        photoURL: user.photoURL || "/default-avatar.png",
+        isAdmin: checkIfAdmin({
           uid: user.uid,
           email: user.email,
-          createdAt: new Date().toISOString(),
-          isAdmin: checkIfAdmin(user), // Include admin status
-        });
-        console.log("New user saved to Firestore:", user);
+          displayName: user.displayName || user.email.split("@")[0],
+          photoURL: user.photoURL || "/default-avatar.png",
+          isAdmin: false,
+          friends: [],
+          myMaps: [],
+          invitedMaps: [],
+        }),
+        friends: [],
+        myMaps: [],
+        invitedMaps: [],
+      };
+
+      if (!userDoc.exists()) {
+        await setDoc(userDocRef, userData);
+        console.log("New user saved to Firestore:", userData);
       } else {
-        // Update existing user data if necessary
         console.log("User already exists in Firestore:", userDoc.data());
       }
+
+      setCurrentUser(userData);
+      setIsAdmin(userData.isAdmin);
     } catch (error: any) {
       console.error("Error saving user to Firestore:", error.message);
     }
   };
 
+  // Google login
   const login = async () => {
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-      if (user) {
-        const userData = { uid: user.uid, email: user.email || "" };
-        setCurrentUser(userData);
-        setIsAdmin(checkIfAdmin(userData)); // Check admin status
-        await saveUserToFirestore(userData); // Save user data to Firestore
+      if (result.user) {
+        await saveUserToFirestore(result.user); // Save user data to Firestore
       }
     } catch (error) {
       console.error("Login failed:", error);
     }
   };
 
+  // Logout function
   const logout = async () => {
     try {
       await signOut(auth);
@@ -87,13 +114,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  // Listen for auth state changes
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        const userData = { uid: user.uid, email: user.email || "" };
-        setCurrentUser(userData);
-        setIsAdmin(checkIfAdmin(userData)); // Update admin status
-        saveUserToFirestore(userData); // Save or update user data on auth state change
+        await saveUserToFirestore(user);
       } else {
         setCurrentUser(null);
         setIsAdmin(false);

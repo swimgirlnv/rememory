@@ -8,6 +8,7 @@
     color: #4E3629; /* Dark Brown */
     min-height: 100vh;
     font-family: "Georgia", serif;
+    max-width: 100vw;
 }
 
 h1 {

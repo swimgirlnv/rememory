@@ -1,7 +1,10 @@
 .control-panel-container {
-    width: 100%;
+    width: 50vw;
     text-align: center;
     margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 /* Expand/Collapse Button */
@@ -36,7 +39,7 @@
     border-radius: 12px;
     padding: 18px;
     width: 100%;
-    max-width: 80vw;
+    max-width: 40vw;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
 }

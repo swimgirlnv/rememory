@@ -62,6 +62,7 @@ export interface UserData {
   friends: string[];              // Array of user IDs for friends
   myMaps: string[];                 // Array of map IDs created by the user
   invitedMaps: string[];          // Array of map IDs the user is invited to
+  photoURL?: string;              // URL to user's profile picture
 }
 
 export interface ActivityData {

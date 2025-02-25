@@ -1,53 +1,92 @@
 import React, { useEffect, useState } from "react";
-import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
+import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
+import {
+  FaMapMarkerAlt,
+  FaRoute,
+  FaUserPlus,
+  FaUserFriends,
+} from "react-icons/fa"; // Icons for updates
 import { db } from "../../firebaseConfig";
-import { useNavigate } from "react-router-dom";
 import "../styles/HomePage.css";
 
-interface ActivityItem {
+interface Activity {
   id: string;
-  type: "new_marker" | "new_map" | "edit_marker" | "group_update";
   userId: string;
   userName: string;
   timestamp: number;
+  type: "new_marker" | "new_path" | "friend_request" | "friend_accepted";
+  details: string;
   mapId?: string;
-  markerId?: string;
-  details?: string;
+  friendId?: string;
 }
 
 const HomePage: React.FC = () => {
-  const [activity, setActivity] = useState<ActivityItem[]>([]);
-  const navigate = useNavigate();
+  const [activities, setActivities] = useState<Activity[]>([]);
 
   useEffect(() => {
-    const activityQuery = query(collection(db, "activityFeed"), orderBy("timestamp", "desc"));
+    const q = query(
+      collection(db, "activityFeed"),
+      orderBy("timestamp", "desc")
+    );
 
-    const unsubscribe = onSnapshot(activityQuery, (snapshot) => {
-      setActivity(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as ActivityItem[]);
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const updates = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Activity[];
+
+      setActivities(updates);
     });
 
     return () => unsubscribe();
   }, []);
 
-  const handleClick = (item: ActivityItem) => {
-    if (item.markerId) {
-      navigate(`/map/${item.mapId}?marker=${item.markerId}`);
-    } else if (item.mapId) {
-      navigate(`/map/${item.mapId}`);
+  const getIcon = (type: string) => {
+    switch (type) {
+      case "new_marker":
+        return <FaMapMarkerAlt className="activity-icon marker" />;
+      case "new_path":
+        return <FaRoute className="activity-icon path" />;
+      case "friend_request":
+        return <FaUserPlus className="activity-icon friend-request" />;
+      case "friend_accepted":
+        return <FaUserFriends className="activity-icon friend-accepted" />;
+      default:
+        return null;
     }
   };
 
   return (
     <div className="home-page">
-      <h1>Home Timeline</h1>
-      <ul>
-        {activity.map((item) => (
-          <li key={item.id} onClick={() => handleClick(item)}>
-            <p><strong>{item.userName}</strong> {item.details}</p>
-            <span>{new Date(item.timestamp).toLocaleString()}</span>
-          </li>
-        ))}
-      </ul>
+      <h1 className="title">Home Timeline</h1>
+      <div className="activity-feed">
+        {activities.length === 0 ? (
+          <p>No recent updates.</p>
+        ) : (
+          activities.map((activity) => (
+            <div
+              key={activity.id}
+              className="activity-item"
+              onClick={() => {
+                if (
+                  activity.type === "new_marker" ||
+                  activity.type === "new_path"
+                ) {
+                  window.location.href = `/map/${activity.mapId}`;
+                } else if (
+                  activity.type === "friend_request" ||
+                  activity.type === "friend_accepted"
+                ) {
+                  window.location.href = `/profile/${activity.friendId}`;
+                }
+              }}
+            >
+              {getIcon(activity.type)}
+              <p>{activity.details}</p>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 };

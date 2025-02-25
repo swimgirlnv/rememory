@@ -44,31 +44,11 @@ const MapDetailPage: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
-  const adminUsers = [
-    { uid: "owM9kxvXLLadr4lR0KkgifJRJda2", email: "j.r.locke20@gmail.com" },
-  ];
-  
-  const isAdmin = adminUsers.some(
-    (admin) =>
-      admin.uid === currentUser?.uid && admin.email === currentUser?.email
-  );
-
-  const canEdit = (item: { createdBy: string }) => {
-    if (!currentUser) return false;
-    return isAdmin || item.createdBy === currentUser.uid;
-  };
-
   useEffect(() => {
     if (!mapId) return;
 
-    const markersQuery = query(
-      collection(db, "markers"),
-      where("mapId", "==", mapId)
-    );
-    const pathsQuery = query(
-      collection(db, "paths"),
-      where("mapId", "==", mapId)
-    );
+    const markersQuery = query(collection(db, "markers"), where("mapId", "==", mapId));
+    const pathsQuery = query(collection(db, "paths"), where("mapId", "==", mapId));
 
     const unsubscribeMarkers = onSnapshot(markersQuery, (snapshot) => {
       setMarkers(
@@ -106,18 +86,39 @@ const MapDetailPage: React.FC = () => {
     };
   }, [mapId]);
 
+  // Toggle editing modes
   const toggleEditingMode = () => setIsEditingMode((prev) => !prev);
   const togglePathEditMode = () => setIsPathEditMode((prev) => !prev);
+
+  // Toggle map visibility & log activity
   const toggleVisibility = async () => {
-    if (!mapId) return;
+    if (!mapId || !currentUser) return;
     const newVisibility = mapVisibility === "private" ? "public" : "private";
-    setMapVisibility(newVisibility);
-    await updateDoc(doc(db, "maps", mapId), { visibility: newVisibility });
+
+    try {
+      await updateDoc(doc(db, "maps", mapId), { visibility: newVisibility });
+      setMapVisibility(newVisibility);
+
+      // Log activity
+      await addDoc(collection(db, "activityFeed"), {
+        type: "visibility_change",
+        userId: currentUser.uid,
+        userName: currentUser.displayName || "Unknown User",
+        timestamp: Date.now(),
+        mapId: mapId,
+        details: `${currentUser.displayName} made the map ${newVisibility}`,
+      });
+    } catch (error) {
+      console.error("Error updating visibility:", error);
+    }
   };
 
   return (
     <div className="map-detail-page">
-      <h1>{mapName}</h1>
+      <div className="map-header">
+        <h1>{mapName}</h1>
+      </div>
+
       <ControlPanel
         isEditingMode={isEditingMode}
         isPathEditMode={isPathEditMode}
@@ -131,6 +132,7 @@ const MapDetailPage: React.FC = () => {
         onCreatePath={() => {}}
         onToggleVisibility={toggleVisibility}
       />
+
       <InteractiveMap
         isEditingMode={isEditingMode}
         isPathEditMode={isPathEditMode}
@@ -150,8 +152,22 @@ const MapDetailPage: React.FC = () => {
         panTo={null}
         mapId={mapId || ""}
       />
-      <EditMarkerModal isOpen={!!editingMarker} onClose={() => setEditingMarker(null)} onSave={() => {}} data={editingMarker} />
-      <EditPathModal isOpen={!!editingPath} onClose={() => setEditingPath(null)} data={editingPath} onSave={() => {}} onDelete={() => {}} />
+
+      <EditMarkerModal
+        isOpen={!!editingMarker}
+        onClose={() => setEditingMarker(null)}
+        onSave={() => {}}
+        data={editingMarker}
+      />
+
+      <EditPathModal
+        isOpen={!!editingPath}
+        onClose={() => setEditingPath(null)}
+        data={editingPath}
+        onSave={() => {}}
+        onDelete={() => {}}
+      />
+
       <ViewDetailsModal isOpen={false} data={null} onClose={() => {}} />
     </div>
   );

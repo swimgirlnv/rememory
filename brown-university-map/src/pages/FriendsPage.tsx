@@ -1,5 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { collection, onSnapshot, doc, updateDoc, setDoc, getDoc } from "firebase/firestore";
+import {
+  collection,
+  onSnapshot,
+  doc,
+  setDoc,
+  deleteDoc,
+  getDocs,
+  query,
+  where,
+  getDoc,
+} from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { db } from "../../firebaseConfig";
 import "../styles/FriendsPage.css";
@@ -21,13 +31,19 @@ const FriendsPage: React.FC = () => {
   useEffect(() => {
     if (!currentUser) return;
 
-    const unsubscribeFriends = onSnapshot(collection(db, `users/${currentUser.uid}/friends`), (snapshot) => {
-      setFriends(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Friend)));
-    });
+    const unsubscribeFriends = onSnapshot(
+      collection(db, `users/${currentUser.uid}/friends`),
+      (snapshot) => {
+        setFriends(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Friend)));
+      }
+    );
 
-    const unsubscribeRequests = onSnapshot(collection(db, `users/${currentUser.uid}/pendingRequests`), (snapshot) => {
-      setPendingRequests(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Friend)));
-    });
+    const unsubscribeRequests = onSnapshot(
+      collection(db, `users/${currentUser.uid}/pendingRequests`),
+      (snapshot) => {
+        setPendingRequests(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Friend)));
+      }
+    );
 
     return () => {
       unsubscribeFriends();
@@ -39,18 +55,34 @@ const FriendsPage: React.FC = () => {
     if (!newFriendEmail || !currentUser) return;
 
     try {
-      // Find the user by email
+      console.log("Searching for user with email:", newFriendEmail);
+
+      // Query Firestore to find the user by email
       const usersCollection = collection(db, "users");
-      const snapshot = await getDoc(doc(usersCollection, newFriendEmail));
-      if (!snapshot.exists()) {
+      const userQuery = query(usersCollection, where("email", "==", newFriendEmail));
+      const userSnapshot = await getDocs(userQuery);
+
+      if (userSnapshot.empty) {
         alert("User not found!");
         return;
       }
-      const newFriend = snapshot.data();
 
-      // Add request to the recipient's pendingRequests
-      const recipientRef = doc(db, `users/${newFriend.uid}/pendingRequests`, currentUser.uid);
-      await setDoc(recipientRef, {
+      const newFriendDoc = userSnapshot.docs[0];
+      const newFriend = newFriendDoc.data();
+      const newFriendId = newFriendDoc.id;
+
+      console.log("Found user:", newFriend);
+
+      // Check if user already has a pending request
+      const pendingRef = doc(db, `users/${newFriendId}/pendingRequests/${currentUser.uid}`);
+      const pendingDoc = await getDoc(pendingRef);
+      if (pendingDoc.exists()) {
+        alert("Friend request already sent.");
+        return;
+      }
+
+      // Send the friend request
+      await setDoc(pendingRef, {
         id: currentUser.uid,
         name: currentUser.displayName || "Unknown",
         email: currentUser.email || "",
@@ -60,7 +92,8 @@ const FriendsPage: React.FC = () => {
       alert("Friend request sent!");
       setNewFriendEmail("");
     } catch (error) {
-      console.error("Error sending friend request:", error);
+      console.error("🔥 Error sending friend request:", error);
+      alert("Failed to send friend request. Check Firestore permissions.");
     }
   };
 
@@ -69,11 +102,11 @@ const FriendsPage: React.FC = () => {
 
     try {
       // Move the request to the friends list
-      const friendRef = doc(db, `users/${currentUser.uid}/friends`, friend.id);
+      const friendRef = doc(db, `users/${currentUser.uid}/friends/${friend.id}`);
       await setDoc(friendRef, friend);
 
       // Add yourself to the friend's friends list
-      const currentUserRef = doc(db, `users/${friend.id}/friends`, currentUser.uid);
+      const currentUserRef = doc(db, `users/${friend.id}/friends/${currentUser.uid}`);
       await setDoc(currentUserRef, {
         id: currentUser.uid,
         name: currentUser.displayName || "Unknown",
@@ -82,11 +115,12 @@ const FriendsPage: React.FC = () => {
       });
 
       // Remove request from pendingRequests
-      await updateDoc(doc(db, `users/${currentUser.uid}/pendingRequests`, friend.id), {});
+      await deleteDoc(doc(db, `users/${currentUser.uid}/pendingRequests/${friend.id}`));
 
       alert("Friend request accepted!");
     } catch (error) {
       console.error("Error accepting friend request:", error);
+      alert("Error accepting request.");
     }
   };
 
@@ -94,7 +128,8 @@ const FriendsPage: React.FC = () => {
     if (!currentUser) return;
 
     try {
-      await updateDoc(doc(db, `users/${currentUser.uid}/friends`, friendId), {});
+      await deleteDoc(doc(db, `users/${currentUser.uid}/friends/${friendId}`));
+      await deleteDoc(doc(db, `users/${friendId}/friends/${currentUser.uid}`));
       alert("Friend removed.");
     } catch (error) {
       console.error("Error removing friend:", error);
@@ -115,40 +150,21 @@ const FriendsPage: React.FC = () => {
               <div className="friend-info">
                 <h3>{friend.name}</h3>
                 <p>{friend.email}</p>
-                <button onClick={() => handleAcceptFriendRequest(friend)} className="accept-friend-button">Accept</button>
+                <button onClick={() => handleAcceptFriendRequest(friend)} className="accept-friend-button">
+                  Accept
+                </button>
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* Friend List */}
-      <div className="friend-list">
-        {friends.length > 0 ? (
-          friends.map((friend) => (
-            <div key={friend.id} className="friend-card">
-              <img src={friend.profilePicture || "/default-avatar.png"} alt={friend.name} className="friend-avatar" />
-              <div className="friend-info">
-                <h3>{friend.name}</h3>
-                <p>{friend.email}</p>
-                <button onClick={() => handleRemoveFriend(friend.id)} className="remove-friend-button">Remove</button>
-              </div>
-            </div>
-          ))
-        ) : (
-          <p className="no-friends-message">You have no friends yet. Add some friends!</p>
-        )}
-      </div>
-
       {/* Add Friend */}
       <div className="add-friend-section">
-        <input
-          type="email"
-          placeholder="Enter friend's email"
-          value={newFriendEmail}
-          onChange={(e) => setNewFriendEmail(e.target.value)}
-        />
-        <button onClick={handleSendFriendRequest} className="add-friend-button">Send Friend Request</button>
+        <input type="email" placeholder="Enter friend's email" value={newFriendEmail} onChange={(e) => setNewFriendEmail(e.target.value)} />
+        <button onClick={handleSendFriendRequest} className="add-friend-button">
+          Send Friend Request
+        </button>
       </div>
     </div>
   );

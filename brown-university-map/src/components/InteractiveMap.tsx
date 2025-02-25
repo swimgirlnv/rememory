@@ -8,6 +8,7 @@ import ViewDetailsModal from "./ViewDetails";
 import GeoSearch from "./GeoSearch";
 import { addDoc, collection, deleteDoc, doc, onSnapshot } from "firebase/firestore";
 import { db } from "../../firebaseConfig";
+import "../styles/InteractiveMap.css";
 
 
 // Helper component to pan and zoom

@@ -1,85 +1,104 @@
+/* Ensure the map container takes full space without breaking layout */
 .leaflet-container {
-    height: 80vh;
-    width: 80vw;
-    border: 2px solid #4E3629; /* Dark Brown */
+    width: 100%;
+    height: calc(100vh - 150px); /* Adjust height dynamically */
     border-radius: 12px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    margin: 20px 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease-in-out;
 }
 
-.popup-content {
-    font-family: Arial, sans-serif;
-    font-size: 0.9rem;
-    color: #4E3629;
-    text-align: center;
-}
-
-.popup-content p {
-    margin: 0 0 10px;
-}
-
-.popup-content button {
-    background-color: #C8102E; /* Cardinal Red */
-    color: #FFF5E1; /* Light Beige */
-    border: none;
-    padding: 8px 12px;
-    font-size: 0.85rem;
+/* Ensure smooth transitions for popups */
+.leaflet-popup-content {
+    font-size: 14px;
     font-weight: bold;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-.popup-content button:hover {
-    background-color: #A30E24; /* Darker Red */
-}
-
-.marker-icon {
-    width: 18px;
-    height: 18px;
-}
-
-.marker-popup {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    color: #4E3629; /* Dark brown */
+    text-align: center;
     padding: 10px;
 }
 
-.marker-popup button {
-    margin-top: 8px;
-    font-size: 0.85rem;
+.leaflet-popup-content-wrapper {
+    background: #FFF5E1; /* Light beige */
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
 }
 
-.path-line {
-    stroke: #8B4513; /* Dark Sienna */
+/* Style for buttons inside popups */
+.leaflet-popup-content button {
+    display: block;
+    margin: 8px auto;
+    padding: 6px 12px;
+    background: #C8102E; /* Deep red */
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s ease-in-out;
+}
+
+.leaflet-popup-content button:hover {
+    background: #8a1e20; /* Darker red */
+}
+
+/* Marker popup appearance */
+.leaflet-popup-tip {
+    background: #FFF5E1; /* Light beige */
+}
+
+/* Smooth zooming effect when panning to a marker */
+.leaflet-container.leaflet-zoom-anim {
+    transition: transform 0.4s ease-in-out;
+}
+
+/* Path styling */
+.leaflet-interactive {
     stroke-width: 2px;
+    stroke: #8B4513; /* Saddle brown */
+    opacity: 0.9;
 }
 
-.control-buttons {
+/* Selected path styling */
+.leaflet-interactive:hover {
+    stroke-width: 3px;
+    opacity: 1;
+}
+
+/* Path selection effects */
+.path-selected {
+    stroke: #FFD700; /* Gold */
+    stroke-width: 3px;
+    opacity: 1;
+}
+
+/* Buttons for selecting markers when editing paths */
+.path-edit-buttons {
     display: flex;
     justify-content: center;
     gap: 10px;
-    margin-top: 20px;
+    margin-top: 10px;
 }
 
-.control-buttons button {
-    background-color: #8B6F61; /* Light Brown */
-    color: #FFF5E1;
+.path-edit-buttons button {
+    background-color: #0077cc;
+    color: white;
     border: none;
-    padding: 10px 14px;
-    font-size: 0.9rem;
-    font-weight: bold;
+    padding: 8px 12px;
     border-radius: 6px;
     cursor: pointer;
-    transition: background-color 0.3s;
+    font-size: 14px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
 }
 
-.control-buttons button:hover {
-    background-color: #5C4033; /* Darker Brown */
+.path-edit-buttons button:hover {
+    background-color: #005fa3;
 }
 
-.control-buttons .active {
-    background-color: #C8102E;
-    color: #FFF5E1;
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .leaflet-container {
+        height: calc(100vh - 180px);
+    }
 }
