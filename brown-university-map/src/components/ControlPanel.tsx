@@ -19,7 +19,7 @@ const ControlPanel: React.FC<{
   isPathEditMode,
   selectedPins,
   pins,
-  markers,
+  // markers,
   mapVisibility,
   onFilter,
   onEditModeToggle,

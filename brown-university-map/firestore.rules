@@ -3,50 +3,37 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // Check if a user is an admin
-    function isAdmin(uid, email) {
-      return (uid == "owM9kxvXLLadr4lR0KkgifJRJda2" && email == "j.r.locke20@gmail.com");
-    }
-
-    // Check if a user has access to a map
-    function canAccessMap(mapData, uid) {
-      return mapData.createdBy == uid || 
-             (mapData.invitedUsers != null && mapData.invitedUsers[uid] == true) || 
-             isAdmin(uid, "");
+    function isAdmin(uid) {
+      return uid == "owM9kxvXLLadr4lR0KkgifJRJda2";
     }
 
     // ✅ Allow all authenticated users to create a map
     match /maps/{mapId} {
-      allow create: if request.auth != null; // Any authenticated user can create a map
-      
-      allow read: if request.auth != null; // Any authenticated user can read maps
-
-      allow update, delete: if request.auth != null && canAccessMap(resource.data, request.auth.uid);
+      allow create: if request.auth != null;
+      allow read: if request.auth != null;
+      allow update, delete: if request.auth != null && (
+        resource.data.createdBy == request.auth.uid
+      );
     }
 
     // ✅ Allow users to create, update, and delete their own markers
     match /markers/{markerId} {
-      allow create: if request.auth != null; // Any authenticated user can create a marker
-
-      allow read: if request.auth != null; // Any user can read markers
-
+      allow create: if request.auth != null;
+      allow read: if request.auth != null;
       allow update, delete: if request.auth != null && resource.data.createdBy == request.auth.uid;
     }
 
     // ✅ Allow users to create, update, and delete their own paths
     match /paths/{pathId} {
-      allow create: if request.auth != null; // Any authenticated user can create a path
-
-      allow read: if request.auth != null; // Any user can read paths
-
+      allow create: if request.auth != null;
+      allow read: if request.auth != null;
       allow update, delete: if request.auth != null && resource.data.createdBy == request.auth.uid;
     }
 
     // ✅ Allow users to create, update, and delete their own pins
     match /pins/{pinId} {
-      allow create: if request.auth != null; // Any authenticated user can create a pin
-
-      allow read: if request.auth != null; // Any user can read pins
-
+      allow create: if request.auth != null;
+      allow read: if request.auth != null;
       allow update, delete: if request.auth != null && resource.data.createdBy == request.auth.uid;
     }
 
@@ -54,18 +41,18 @@ service cloud.firestore {
     match /users/{userId} {
       allow create: if request.auth != null && request.auth.uid == userId;
       allow read, update: if request.auth != null && request.auth.uid == userId;
+    }
 
-      // ✅ Allow sending friend requests
-      match /pendingRequests/{requestId} {
-        allow create: if request.auth != null && request.auth.uid != userId; // Any user can send a request
-        allow read, delete: if request.auth != null && request.auth.uid == userId; // Only recipient can read/delete
-      }
+    // ✅ Allow sending friend requests as a separate collection
+    match /pendingRequests/{requestId} {
+      allow create: if request.auth != null;
+      allow read, delete: if request.auth != null && request.auth.uid == resource.data.recipientId;
+    }
 
-      // ✅ Allow managing friends list
-      match /friends/{friendId} {
-        allow read, delete: if request.auth != null && request.auth.uid == userId;
-        allow create: if request.auth != null && request.auth.uid != userId;
-      }
+    // ✅ Allow managing friends list
+    match /friends/{friendId} {
+      allow read, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null;
     }
 
     // ✅ Tags Collection

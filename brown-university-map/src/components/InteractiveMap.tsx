@@ -43,6 +43,7 @@ const InteractiveMap: React.FC<{
   onBoundsChange: (bounds: { north: number; south: number; east: number; west: number }) => void;
   panTo: { lat: number; lng: number } | null;
   mapId: string;
+  onReportMarker: (markerId: string) => void;
 }> = ({
   isEditingMode,
   isPathEditMode,
@@ -59,6 +60,7 @@ const InteractiveMap: React.FC<{
   onBoundsChange,
   panTo,
   mapId,
+  //onReportMarker,
 }) => {
 
   useEffect(() => {

@@ -8,7 +8,6 @@ import {
   addDoc,
   doc,
   updateDoc,
-  deleteDoc,
   getDoc,
 } from "firebase/firestore";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
@@ -27,14 +26,14 @@ const MapDetailPage: React.FC = () => {
   const [mapVisibility, setMapVisibility] = useState<"public" | "private">("private");
   const [markers, setMarkers] = useState<MarkerData[]>([]);
   const [paths, setPaths] = useState<PathData[]>([]);
-  const [pins, setPins] = useState<PinData[]>([]);
+  const [pins] = useState<PinData[]>([]);
   const [isEditingMode, setIsEditingMode] = useState(false);
   const [isPathEditMode, setIsPathEditMode] = useState(false);
   const [selectedPins, setSelectedPins] = useState<string[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [editingMarker, setEditingMarker] = useState<MarkerData | null>(null);
   const [editingPath, setEditingPath] = useState<PathData | null>(null);
-  const [viewMode, setViewMode] = useState<"markers" | "paths" | "both">("both");
+  const [viewMode] = useState<"markers" | "paths" | "both">("both");
 
   useEffect(() => {
     const auth = getAuth();
@@ -151,19 +150,21 @@ const MapDetailPage: React.FC = () => {
         currentUser={currentUser}
         panTo={null}
         mapId={mapId || ""}
+        onReportMarker={() => {}}
       />
 
       <EditMarkerModal
         isOpen={!!editingMarker}
         onClose={() => setEditingMarker(null)}
         onSave={() => {}}
-        data={editingMarker}
+        data={editingMarker ? { ...editingMarker, media: editingMarker.media ?? [] } : null}
+        onDelete={() => {}}
       />
 
       <EditPathModal
         isOpen={!!editingPath}
         onClose={() => setEditingPath(null)}
-        data={editingPath}
+        data={editingPath ? { ...editingPath, media: editingPath.media ?? [] } : null}
         onSave={() => {}}
         onDelete={() => {}}
       />

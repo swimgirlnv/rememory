@@ -22,7 +22,7 @@ interface Friend {
 }
 
 const FriendsPage: React.FC = () => {
-  const [friends, setFriends] = useState<Friend[]>([]);
+  const [, setFriends] = useState<Friend[]>([]);
   const [pendingRequests, setPendingRequests] = useState<Friend[]>([]);
   const [newFriendEmail, setNewFriendEmail] = useState("");
   const auth = getAuth();
@@ -52,43 +52,54 @@ const FriendsPage: React.FC = () => {
   }, [currentUser]);
 
   const handleSendFriendRequest = async () => {
-    if (!newFriendEmail || !currentUser) return;
-
+    if (!newFriendEmail || !currentUser || !currentUser.uid) {
+      alert("You must be signed in to send a friend request.");
+      return;
+    }
+  
     try {
       console.log("Searching for user with email:", newFriendEmail);
-
-      // Query Firestore to find the user by email
+  
+      // 🔹 Query Firestore to find the user by email
       const usersCollection = collection(db, "users");
       const userQuery = query(usersCollection, where("email", "==", newFriendEmail));
       const userSnapshot = await getDocs(userQuery);
-
+  
       if (userSnapshot.empty) {
         alert("User not found!");
         return;
       }
-
+  
       const newFriendDoc = userSnapshot.docs[0];
       const newFriend = newFriendDoc.data();
       const newFriendId = newFriendDoc.id;
-
+  
+      if (!newFriendId) {
+        console.error("Friend user ID is undefined.");
+        alert("Error: Could not find user.");
+        return;
+      }
+  
       console.log("Found user:", newFriend);
-
-      // Check if user already has a pending request
-      const pendingRef = doc(db, `users/${newFriendId}/pendingRequests/${currentUser.uid}`);
+  
+      // 🔹 Check if request already exists
+      const pendingRef = doc(db, `pendingRequests/${currentUser.uid}_${newFriendId}`);
       const pendingDoc = await getDoc(pendingRef);
       if (pendingDoc.exists()) {
         alert("Friend request already sent.");
         return;
       }
-
-      // Send the friend request
+  
+      // ✅ Send the friend request
       await setDoc(pendingRef, {
-        id: currentUser.uid,
-        name: currentUser.displayName || "Unknown",
-        email: currentUser.email || "",
-        profilePicture: currentUser.photoURL || "",
+        senderId: currentUser.uid,
+        recipientId: newFriendId,
+        senderName: currentUser.displayName || "Unknown",
+        senderEmail: currentUser.email || "",
+        senderProfilePicture: currentUser.photoURL || "",
+        status: "pending",
       });
-
+  
       alert("Friend request sent!");
       setNewFriendEmail("");
     } catch (error) {
@@ -124,17 +135,17 @@ const FriendsPage: React.FC = () => {
     }
   };
 
-  const handleRemoveFriend = async (friendId: string) => {
-    if (!currentUser) return;
+  // const handleRemoveFriend = async (friendId: string) => {
+  //   if (!currentUser) return;
 
-    try {
-      await deleteDoc(doc(db, `users/${currentUser.uid}/friends/${friendId}`));
-      await deleteDoc(doc(db, `users/${friendId}/friends/${currentUser.uid}`));
-      alert("Friend removed.");
-    } catch (error) {
-      console.error("Error removing friend:", error);
-    }
-  };
+  //   try {
+  //     await deleteDoc(doc(db, `users/${currentUser.uid}/friends/${friendId}`));
+  //     await deleteDoc(doc(db, `users/${friendId}/friends/${currentUser.uid}`));
+  //     alert("Friend removed.");
+  //   } catch (error) {
+  //     console.error("Error removing friend:", error);
+  //   }
+  // };
 
   return (
     <div className="friends-page">

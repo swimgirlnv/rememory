@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { doc, getDoc, updateDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, updateDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../../firebaseConfig";
 import { sendInvitationEmail } from "../scripts/emailService";
 

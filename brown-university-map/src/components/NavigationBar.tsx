@@ -6,7 +6,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { FaMapMarkedAlt, FaUserFriends, FaUser, FaHome, FaInfoCircle, FaMap } from "react-icons/fa";
 import "../styles/NavigationBar.css";
 
-const NavigationBar: React.FC<{ onAboutOpen: () => void }> = () => {
+const NavigationBar: React.FC = () => {
   const [scrolled, setScrolled] = useState(false);
   const { currentUser, isAdmin, login, logout } = useAuth();
   const [profileName, setProfileName] = useState("User");
